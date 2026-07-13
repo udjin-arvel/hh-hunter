@@ -1,19 +1,57 @@
-import { backgroundPingMessageSchema, backgroundPongResponseSchema } from "../lib/schemas";
+import { toAppError } from "../lib/errors";
+import { fetchPortfolioPage } from "../lib/portfolio-import";
+import {
+  backgroundPingMessageSchema,
+  backgroundPongResponseSchema,
+  importPortfolioErrorSchema,
+  importPortfolioMessageSchema,
+  importPortfolioSuccessSchema,
+} from "../lib/schemas";
 
 export default defineBackground(() => {
-  browser.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-    const parsed = backgroundPingMessageSchema.safeParse(message);
+  void browser.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
 
-    if (!parsed.success) {
+  browser.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+    const ping = backgroundPingMessageSchema.safeParse(message);
+
+    if (ping.success) {
+      sendResponse(
+        backgroundPongResponseSchema.parse({
+          type: "pong",
+          ok: true,
+        }),
+      );
+      return true;
+    }
+
+    const importMessage = importPortfolioMessageSchema.safeParse(message);
+
+    if (!importMessage.success) {
       return false;
     }
 
-    const response = backgroundPongResponseSchema.parse({
-      type: "pong",
-      ok: true,
-    });
+    void (async () => {
+      try {
+        const text = await fetchPortfolioPage(importMessage.data.url);
+        sendResponse(
+          importPortfolioSuccessSchema.parse({
+            type: "import_portfolio_result",
+            ok: true,
+            text,
+          }),
+        );
+      } catch (error) {
+        const appError = toAppError(error);
+        sendResponse(
+          importPortfolioErrorSchema.parse({
+            type: "import_portfolio_result",
+            ok: false,
+            error: appError,
+          }),
+        );
+      }
+    })();
 
-    sendResponse(response);
     return true;
   });
 });

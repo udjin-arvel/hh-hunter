@@ -59,3 +59,41 @@ export const backgroundPongResponseSchema = z.object({
   type: z.literal("pong"),
   ok: z.literal(true),
 });
+
+export const importPortfolioMessageSchema = z.object({
+  type: z.literal("import_portfolio"),
+  url: z.string().url(),
+});
+
+export const importPortfolioSuccessSchema = z.object({
+  type: z.literal("import_portfolio_result"),
+  ok: z.literal(true),
+  text: z.string(),
+});
+
+export const importPortfolioErrorSchema = z.object({
+  type: z.literal("import_portfolio_result"),
+  ok: z.literal(false),
+  error: appErrorSchema,
+});
+
+export const importPortfolioResponseSchema = z.discriminatedUnion("ok", [
+  importPortfolioSuccessSchema,
+  importPortfolioErrorSchema,
+]);
+
+export const STORAGE_VERSION = 1;
+
+export const tabKeySchema = z.enum(["profile", "generator", "api"]);
+
+export const persistedStateSchema = z.object({
+  version: z.literal(STORAGE_VERSION),
+  profile: profileSchema,
+  settings: generationSettingsSchema,
+  apiKey: z.string().default(""),
+  ui: z
+    .object({
+      activeTab: tabKeySchema.default("generator"),
+    })
+    .default({ activeTab: "generator" }),
+});

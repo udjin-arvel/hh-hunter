@@ -1,15 +1,15 @@
 import type { z } from "zod";
 
+import { generationSettingsSchema, persistedStateSchema, profileSchema } from "./schemas";
 import type {
   appErrorCodeSchema,
   appErrorSchema,
   backgroundPingMessageSchema,
   backgroundPongResponseSchema,
   generationResultSchema,
-  generationSettingsSchema,
   letterLengthSchema,
   letterStyleSchema,
-  profileSchema,
+  tabKeySchema,
   vacancySchema,
 } from "./schemas";
 
@@ -23,12 +23,19 @@ export type GenerationSettings = z.infer<typeof generationSettingsSchema>;
 export type GenerationResult = z.infer<typeof generationResultSchema>;
 export type BackgroundPingMessage = z.infer<typeof backgroundPingMessageSchema>;
 export type BackgroundPongResponse = z.infer<typeof backgroundPongResponseSchema>;
+export type TabKey = z.infer<typeof tabKeySchema>;
+export type PersistedState = z.infer<typeof persistedStateSchema>;
 
-export const DEFAULT_GENERATION_SETTINGS: GenerationSettings = {
-  style: "business",
-  length: "medium",
-  focus: "",
-};
+export const DEFAULT_PROFILE: Profile = profileSchema.parse({});
+export const DEFAULT_GENERATION_SETTINGS: GenerationSettings = generationSettingsSchema.parse({});
+
+export const DEFAULT_PERSISTED_STATE: PersistedState = persistedStateSchema.parse({
+  version: 1,
+  profile: DEFAULT_PROFILE,
+  settings: DEFAULT_GENERATION_SETTINGS,
+  apiKey: "",
+  ui: { activeTab: "generator" },
+});
 
 export const LETTER_STYLE_LABELS: Record<LetterStyle, string> = {
   business: "Деловой",
