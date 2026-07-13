@@ -16,7 +16,7 @@ make dev
 
 ## Конфигурация
 
-Перед сборкой или запуском скопируйте [`.env.example`](.env.example) в `.env` и задайте `WXT_DEEPSEEK_API_KEY`. Файл `.env` не коммитится в git. Ключ используется только в background service worker при запросах к DeepSeek.
+Перед сборкой или запуском скопируйте [`.env.example`](.env.example) в `.env` и задайте `WXT_DEEPSEEK_API_KEY`. Опционально: `WXT_HH_USER_AGENT` в формате `HH-Hunter/1.1.0 (your@email.com)` для запросов к HH API. Файл `.env` не коммитится в git. Ключ используется только в background service worker при запросах к DeepSeek.
 
 ## Makefile
 

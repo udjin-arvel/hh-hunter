@@ -11,9 +11,14 @@ export default defineConfig({
     version: "1.1.0",
     description:
       "Генерация персонализированных сопроводительных писем для вакансий HeadHunter с помощью DeepSeek.",
-    permissions: ["storage", "activeTab", "sidePanel", "tabs"],
+    permissions: ["storage", "activeTab", "sidePanel", "tabs", "scripting"],
     action: {},
-    host_permissions: ["https://api.hh.ru/*", "https://api.deepseek.com/*"],
+    host_permissions: [
+      "https://api.hh.ru/*",
+      "https://api.deepseek.com/*",
+      "https://hh.ru/*",
+      "https://*.hh.ru/*",
+    ],
     optional_host_permissions: ["https://*/*", "http://*/*"],
   },
 });

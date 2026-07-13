@@ -14,6 +14,8 @@ describe("allowed host constants", () => {
     expect(REQUIRED_HOST_PERMISSIONS).toEqual([
       "https://api.hh.ru/*",
       "https://api.deepseek.com/*",
+      "https://hh.ru/*",
+      "https://*.hh.ru/*",
     ]);
   });
 

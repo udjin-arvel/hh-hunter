@@ -18,6 +18,7 @@ import {
 } from "./messaging";
 import { buildGenerationRequest as createGenerationRequest } from "./prompts";
 import { getProfilePreviewText, truncatePreview, validatePortfolioUrl } from "./profile";
+import { ensureOriginPermission } from "./portfolio-import";
 import {
   loadPersistedState,
   saveActiveTab,
@@ -208,6 +209,16 @@ export const useAppStore = create<AppState>((set, get) => ({
       return;
     }
 
+    try {
+      await ensureOriginPermission(url);
+    } catch (error) {
+      set({
+        portfolioImportError: getErrorMessage(error),
+        portfolioImportSuccess: false,
+      });
+      return;
+    }
+
     set({
       isImportingPortfolio: true,
       portfolioImportError: null,
@@ -263,7 +274,16 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   scanActiveTab: async () => {
-    const { activeTabUrl } = get();
+    let tab;
+
+    try {
+      [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+    } catch {
+      set({ vacancyError: "Не удалось определить активную вкладку" });
+      return;
+    }
+
+    const activeTabUrl = tab?.url ?? null;
 
     if (!activeTabUrl) {
       set({ vacancyError: "Не удалось определить активную вкладку" });
@@ -277,12 +297,22 @@ export const useAppStore = create<AppState>((set, get) => ({
       return;
     }
 
+    if (tab.id == null) {
+      set({ vacancyError: "Не удалось определить активную вкладку" });
+      return;
+    }
+
     const sourceUrl = normalizeHhVacancyUrl(activeTabUrl) ?? undefined;
 
-    set({ isFetchingVacancy: true, vacancyError: null });
+    set({
+      activeTabUrl,
+      isHhVacancyTab: true,
+      isFetchingVacancy: true,
+      vacancyError: null,
+    });
 
     try {
-      const vacancy = await fetchVacancyById(vacancyId, sourceUrl);
+      const vacancy = await fetchVacancyById(vacancyId, sourceUrl, tab.id);
       set({
         vacancy,
         manualVacancyUrl: sourceUrl ?? get().manualVacancyUrl,

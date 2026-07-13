@@ -72,6 +72,7 @@ describe("truncateVacancyDescription", () => {
 
 describe("mapHhHttpStatusToError", () => {
   it("maps common statuses", () => {
+    expect(mapHhHttpStatusToError(403).code).toBe("UNAUTHORIZED");
     expect(mapHhHttpStatusToError(404).code).toBe("NOT_FOUND");
     expect(mapHhHttpStatusToError(429).code).toBe("RATE_LIMIT");
     expect(mapHhHttpStatusToError(503).code).toBe("NETWORK");

@@ -4,6 +4,8 @@ export const DEEPSEEK_API_HOST_PATTERN = /^https:\/\/api\.deepseek\.com\//;
 export const REQUIRED_HOST_PERMISSIONS = [
   "https://api.hh.ru/*",
   "https://api.deepseek.com/*",
+  "https://hh.ru/*",
+  "https://*.hh.ru/*",
 ] as const;
 
 export const OPTIONAL_HOST_PERMISSIONS = ["https://*/*", "http://*/*"] as const;

@@ -1,6 +1,6 @@
 import { generateLetter } from "../lib/api/deepseek";
 import { getDeepSeekApiKey } from "../lib/deepseek-config";
-import { fetchHhVacancy } from "../lib/api/hh";
+import { fetchHhVacancy, fetchHhVacancyFromWebsite, fetchHhVacancyViaTab } from "../lib/api/hh";
 import { toAppError } from "../lib/errors";
 import { fetchPortfolioPage } from "../lib/portfolio-import";
 import { buildGenerationRequest } from "../lib/prompts";
@@ -71,10 +71,23 @@ export default defineBackground(() => {
     if (fetchVacancyMessage.success) {
       void (async () => {
         try {
-          const vacancy = await fetchHhVacancy(
-            fetchVacancyMessage.data.vacancyId,
-            fetchVacancyMessage.data.sourceUrl,
-          );
+          const { vacancyId, sourceUrl, tabId } = fetchVacancyMessage.data;
+          let vacancy;
+
+          if (tabId != null) {
+            try {
+              vacancy = await fetchHhVacancyViaTab(tabId, vacancyId, sourceUrl);
+            } catch (tabError) {
+              try {
+                vacancy = await fetchHhVacancyFromWebsite(vacancyId, sourceUrl);
+              } catch {
+                throw tabError;
+              }
+            }
+          } else {
+            vacancy = await fetchHhVacancy(vacancyId, sourceUrl);
+          }
+
           sendResponse(
             fetchVacancySuccessSchema.parse({
               type: "fetch_vacancy_result",

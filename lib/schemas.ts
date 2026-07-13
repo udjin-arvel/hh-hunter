@@ -96,6 +96,7 @@ export const fetchVacancyMessageSchema = z.object({
   type: z.literal("fetch_vacancy"),
   vacancyId: z.string().min(1),
   sourceUrl: z.string().url().optional(),
+  tabId: z.number().int().positive().optional(),
 });
 
 export const fetchVacancySuccessSchema = z.object({

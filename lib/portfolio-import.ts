@@ -2,8 +2,8 @@ import { createAppError } from "./errors";
 import { isInformativeText, stripHtmlToText } from "./html";
 import type { AppError } from "./types";
 
-export const FETCH_TIMEOUT_MS = 10_000;
-export const MAX_RESPONSE_BYTES = 512_000;
+export const FETCH_TIMEOUT_MS = 15_000;
+export const MAX_RESPONSE_BYTES = 5_000_000;
 export const MAX_EXTRACTED_CHARS = 20_000;
 export const MIN_INFORMATIVE_CHARS = 100;
 
@@ -118,8 +118,20 @@ export async function ensureOriginPermission(url: string): Promise<void> {
   }
 }
 
+async function assertOriginPermission(url: string): Promise<void> {
+  const originPattern = getOriginPattern(url);
+  const hasPermission = await browser.permissions.contains({ origins: [originPattern] });
+
+  if (!hasPermission) {
+    throw createAppError(
+      "UNAUTHORIZED",
+      "Нет доступа к сайту портфолио. Разрешите доступ или вставьте опыт вручную.",
+    );
+  }
+}
+
 export async function fetchPortfolioPage(url: string): Promise<string> {
-  await ensureOriginPermission(url);
+  await assertOriginPermission(url);
 
   let response: Response;
 

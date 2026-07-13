@@ -31,11 +31,16 @@ export async function importPortfolioFromUrl(url: string): Promise<string> {
   return parsed.data.text;
 }
 
-export async function fetchVacancyById(vacancyId: string, sourceUrl?: string): Promise<Vacancy> {
+export async function fetchVacancyById(
+  vacancyId: string,
+  sourceUrl?: string,
+  tabId?: number,
+): Promise<Vacancy> {
   const message = fetchVacancyMessageSchema.parse({
     type: "fetch_vacancy",
     vacancyId,
     sourceUrl,
+    tabId,
   });
 
   const response = await browser.runtime.sendMessage(message);
