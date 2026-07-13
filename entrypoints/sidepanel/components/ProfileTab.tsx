@@ -1,6 +1,7 @@
 import { useAppStore } from "@/lib/store";
 
 import { Field } from "./Field";
+import { PrivacyNotice } from "./PrivacyNotice";
 import { ProfilePreview } from "./ProfilePreview";
 
 export function ProfileTab() {
@@ -61,9 +62,7 @@ export function ProfileTab() {
         />
       </div>
 
-      <div className="rounded-xl bg-surface p-3 text-[11px] text-muted-foreground">
-        Данные хранятся локально в браузере и уходят только в DeepSeek при генерации.
-      </div>
+      <PrivacyNotice variant="short" />
 
       {profilePreview && <ProfilePreview text={profilePreview} />}
 

@@ -46,9 +46,19 @@ export const generationSettingsSchema = z.object({
 });
 
 export const generationResultSchema = z.object({
-  hidden_keys: z.array(z.string()).min(1),
-  unique_intersection: z.string().min(1),
+  hidden_keys: z.array(z.string().min(1)).min(2).max(3),
+  unique_intersection: z.string().min(20),
   letter: z.string().min(1),
+});
+
+export const generationRequestSchema = z.object({
+  system: z.string().min(1),
+  user: z.string().min(1),
+  model: z.literal("deepseek-chat"),
+  temperature: z.literal(0.7),
+  response_format: z.object({
+    type: z.literal("json_object"),
+  }),
 });
 
 export const backgroundPingMessageSchema = z.object({
@@ -81,6 +91,84 @@ export const importPortfolioResponseSchema = z.discriminatedUnion("ok", [
   importPortfolioSuccessSchema,
   importPortfolioErrorSchema,
 ]);
+
+export const fetchVacancyMessageSchema = z.object({
+  type: z.literal("fetch_vacancy"),
+  vacancyId: z.string().min(1),
+  sourceUrl: z.string().url().optional(),
+});
+
+export const fetchVacancySuccessSchema = z.object({
+  type: z.literal("fetch_vacancy_result"),
+  ok: z.literal(true),
+  vacancy: vacancySchema,
+});
+
+export const fetchVacancyErrorSchema = z.object({
+  type: z.literal("fetch_vacancy_result"),
+  ok: z.literal(false),
+  error: appErrorSchema,
+});
+
+export const fetchVacancyResponseSchema = z.discriminatedUnion("ok", [
+  fetchVacancySuccessSchema,
+  fetchVacancyErrorSchema,
+]);
+
+export const verifyApiKeyMessageSchema = z.object({
+  type: z.literal("verify_api_key"),
+  apiKey: z.string().min(1),
+});
+
+export const verifyApiKeySuccessSchema = z.object({
+  type: z.literal("verify_api_key_result"),
+  ok: z.literal(true),
+});
+
+export const verifyApiKeyErrorSchema = z.object({
+  type: z.literal("verify_api_key_result"),
+  ok: z.literal(false),
+  error: appErrorSchema,
+});
+
+export const verifyApiKeyResponseSchema = z.discriminatedUnion("ok", [
+  verifyApiKeySuccessSchema,
+  verifyApiKeyErrorSchema,
+]);
+
+export const generateLetterMessageSchema = z.object({
+  type: z.literal("generate_letter"),
+  apiKey: z.string().min(1),
+  profile: profileSchema,
+  vacancy: vacancySchema,
+  settings: generationSettingsSchema,
+});
+
+export const generateLetterSuccessSchema = z.object({
+  type: z.literal("generate_letter_result"),
+  ok: z.literal(true),
+  result: generationResultSchema,
+});
+
+export const generateLetterErrorSchema = z.object({
+  type: z.literal("generate_letter_result"),
+  ok: z.literal(false),
+  error: appErrorSchema,
+});
+
+export const generateLetterResponseSchema = z.discriminatedUnion("ok", [
+  generateLetterSuccessSchema,
+  generateLetterErrorSchema,
+]);
+
+export const cancelGenerateLetterMessageSchema = z.object({
+  type: z.literal("cancel_generate_letter"),
+});
+
+export const cancelGenerateLetterResponseSchema = z.object({
+  type: z.literal("cancel_generate_letter_result"),
+  ok: z.literal(true),
+});
 
 export const STORAGE_VERSION = 1;
 

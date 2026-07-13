@@ -46,7 +46,7 @@ export function migrateRawStorage(raw: unknown): PersistedState {
       return parsed.data;
     }
 
-    console.warn("[hh-hunter] Failed to parse v1 storage, using defaults", parsed.error);
+    console.warn("[hh-hunter] Failed to parse v1 storage, using defaults");
     return DEFAULT_PERSISTED_STATE;
   }
 

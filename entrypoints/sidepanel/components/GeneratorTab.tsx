@@ -1,119 +1,111 @@
+import { useEffect } from "react";
+
 import { useAppStore } from "@/lib/store";
 import type { LetterLength, LetterStyle } from "@/lib/types";
 
+import { GenerationProgress } from "./GenerationProgress";
+import { ResultView } from "./ResultView";
 import { Segmented } from "./Segmented";
+import { VacancyCard } from "./VacancyCard";
 
-function ResultBlockPlaceholder() {
-  return (
-    <div className="space-y-3 pt-1">
-      <div className="rounded-2xl border border-accent/40 bg-accent/10 p-3">
-        <div className="mb-1 text-[10px] font-medium uppercase tracking-wider text-accent-foreground/80">
-          Точка пересечения
-        </div>
-        <p className="text-[12px] leading-relaxed">
-          В вакансии — управление изменениями в дизайн-системе. У вас — миграция B2B-продукта на
-          новую DS. Идеальный мостик.
-        </p>
-      </div>
+function formatActiveTabUrl(url: string | null): string {
+  if (!url) {
+    return "Нет активной вкладки";
+  }
 
-      <div className="rounded-2xl border border-border p-3">
-        <div className="mb-1.5 flex items-center justify-between text-[10px] uppercase tracking-wider text-muted-foreground">
-          <span>Готовое письмо</span>
-          <span>132 слова</span>
-        </div>
-        <p className="text-[12px] leading-relaxed text-foreground/90">
-          Здравствуйте! Прочитал описание вакансии продуктового дизайнера и увидел знакомую задачу —
-          развивать зрелую дизайн-систему в условиях быстрых продуктовых итераций.
-        </p>
-      </div>
+  try {
+    const parsed = new URL(url);
+    return `${parsed.hostname}${parsed.pathname}`;
+  } catch {
+    return url;
+  }
+}
 
-      <details className="rounded-2xl border border-border p-3 text-[12px]">
-        <summary className="cursor-pointer text-[11px] text-muted-foreground">
-          Скрытые ключи вакансии (3)
-        </summary>
-        <ul className="mt-2 space-y-1 text-muted-foreground">
-          <li>· Устойчивость к смене приоритетов</li>
-          <li>· Опыт защиты решений перед стейкхолдерами</li>
-          <li>· Кросс-командная коммуникация</li>
-        </ul>
-      </details>
-
-      <div className="flex gap-2">
-        <button
-          type="button"
-          disabled
-          className="flex-1 rounded-xl bg-primary py-2 text-[12px] text-primary-foreground opacity-60"
-        >
-          Скопировать
-        </button>
-        <button
-          type="button"
-          disabled
-          className="rounded-xl border border-border px-3 py-2 text-[12px] opacity-60"
-        >
-          ↻
-        </button>
-        <button
-          type="button"
-          disabled
-          className="rounded-xl border border-border px-3 py-2 text-[12px] opacity-60"
-        >
-          Отклик ↗
-        </button>
-      </div>
-    </div>
-  );
+function formatDuration(durationMs: number): string {
+  const seconds = Math.max(1, Math.round(durationMs / 1000));
+  return `${seconds} с`;
 }
 
 export function GeneratorTab() {
   const settings = useAppStore((state) => state.settings);
   const updateSettings = useAppStore((state) => state.updateSettings);
+  const vacancy = useAppStore((state) => state.vacancy);
+  const apiKey = useAppStore((state) => state.apiKey);
+  const activeTabUrl = useAppStore((state) => state.activeTabUrl);
+  const isHhVacancyTab = useAppStore((state) => state.isHhVacancyTab);
+  const manualVacancyUrl = useAppStore((state) => state.manualVacancyUrl);
+  const isFetchingVacancy = useAppStore((state) => state.isFetchingVacancy);
+  const vacancyError = useAppStore((state) => state.vacancyError);
+  const generationInputError = useAppStore((state) => state.generationInputError);
+  const generationResult = useAppStore((state) => state.generationResult);
+  const isGenerating = useAppStore((state) => state.isGenerating);
+  const generationError = useAppStore((state) => state.generationError);
+  const generationStage = useAppStore((state) => state.generationStage);
+  const generationStartedAt = useAppStore((state) => state.generationStartedAt);
+  const generationDurationMs = useAppStore((state) => state.generationDurationMs);
+  const refreshActiveTabInfo = useAppStore((state) => state.refreshActiveTabInfo);
+  const checkGenerationReadiness = useAppStore((state) => state.checkGenerationReadiness);
+  const scanActiveTab = useAppStore((state) => state.scanActiveTab);
+  const importVacancyFromUrl = useAppStore((state) => state.importVacancyFromUrl);
+  const setManualVacancyUrl = useAppStore((state) => state.setManualVacancyUrl);
+  const generateLetter = useAppStore((state) => state.generateLetter);
+  const cancelGeneration = useAppStore((state) => state.cancelGeneration);
+
+  const canGenerate = !generationInputError && Boolean(apiKey.trim()) && !isGenerating;
+
+  useEffect(() => {
+    void refreshActiveTabInfo();
+    checkGenerationReadiness();
+  }, [refreshActiveTabInfo, checkGenerationReadiness]);
 
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-border bg-surface/60 p-3">
         <div className="mb-2 flex items-center justify-between text-[11px] text-muted-foreground">
           <span>Активная вкладка</span>
-          <span className="inline-flex items-center gap-1 text-success">
-            <span className="h-1.5 w-1.5 rounded-full bg-success" />
-            hh.ru/vacancy
-          </span>
+          {isHhVacancyTab ? (
+            <span className="inline-flex items-center gap-1 text-success">
+              <span className="h-1.5 w-1.5 rounded-full bg-success" />
+              hh.ru/vacancy
+            </span>
+          ) : (
+            <span className="text-muted-foreground">не вакансия HH</span>
+          )}
         </div>
         <div className="truncate rounded-lg bg-background px-3 py-2 font-mono text-[11px] text-muted-foreground">
-          hh.ru/vacancy/128456712
+          {formatActiveTabUrl(activeTabUrl)}
         </div>
         <button
           type="button"
-          disabled
-          className="mt-2 w-full rounded-xl bg-primary py-2.5 text-[13px] font-medium text-primary-foreground opacity-60"
+          disabled={!isHhVacancyTab || isFetchingVacancy}
+          onClick={() => void scanActiveTab()}
+          className="mt-2 w-full rounded-xl bg-primary py-2.5 text-[13px] font-medium text-primary-foreground disabled:opacity-60"
         >
-          Сканировать вакансию
+          {isFetchingVacancy ? "Загрузка…" : "Сканировать вакансию"}
         </button>
       </div>
 
-      <div className="rounded-2xl border border-border p-3">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <div className="text-[13px] font-semibold">Продуктовый дизайнер</div>
-            <div className="text-[11px] text-muted-foreground">
-              Тинькофф · крупный бизнес · Гибрид
-            </div>
-          </div>
-          <span className="rounded-full bg-surface px-2 py-0.5 text-[10px] text-muted-foreground">
-            3–6 лет
-          </span>
-        </div>
-        <div className="mt-2 flex flex-wrap gap-1">
-          {["Figma", "UX-research", "B2C", "Design system"].map((skill) => (
-            <span
-              key={skill}
-              className="rounded-full border border-border px-2 py-0.5 text-[10px] text-muted-foreground"
-            >
-              {skill}
-            </span>
-          ))}
-        </div>
+      <div className="rounded-2xl border border-border bg-surface/60 p-3">
+        <div className="mb-1 text-[11px] text-muted-foreground">Ссылка на вакансию</div>
+        <input
+          value={manualVacancyUrl}
+          onChange={(event) => setManualVacancyUrl(event.target.value)}
+          placeholder="https://hh.ru/vacancy/…"
+          className="w-full rounded-xl border border-border bg-background px-3 py-2 text-[12px] outline-none placeholder:text-muted-foreground focus:border-foreground"
+        />
+        <button
+          type="button"
+          disabled={!manualVacancyUrl.trim() || isFetchingVacancy}
+          onClick={() => void importVacancyFromUrl()}
+          className="mt-2 w-full rounded-xl border border-border py-2 text-[12px] disabled:opacity-60"
+        >
+          Загрузить
+        </button>
       </div>
+
+      {vacancyError && <p className="text-[11px] text-red-600">{vacancyError}</p>}
+
+      {vacancy && <VacancyCard vacancy={vacancy} />}
 
       <div className="space-y-2.5">
         <Segmented<LetterStyle>
@@ -142,20 +134,46 @@ export function GeneratorTab() {
             value={settings.focus}
             onChange={(event) => updateSettings({ focus: event.target.value })}
             placeholder="Напр. акцент на управлении командами…"
+            maxLength={500}
             className="w-full rounded-xl border border-border bg-background px-3 py-2 text-[12px] outline-none placeholder:text-muted-foreground focus:border-foreground"
           />
         </div>
+        <p className="text-[10px] text-muted-foreground">
+          Кратко ~50 слов · Средне ~100 · Подробно ~180
+        </p>
       </div>
+
+      {generationInputError && <p className="text-[11px] text-amber-700">{generationInputError}</p>}
 
       <button
         type="button"
-        disabled
-        className="w-full rounded-xl bg-primary py-3 text-[13px] font-medium text-primary-foreground opacity-60"
+        disabled={!canGenerate}
+        onClick={() => void generateLetter()}
+        className="w-full rounded-xl bg-primary py-3 text-[13px] font-medium text-primary-foreground disabled:opacity-60"
       >
-        Сгенерировать письмо ↗
+        {isGenerating ? "Генерация…" : "Сгенерировать письмо ↗"}
       </button>
 
-      <ResultBlockPlaceholder />
+      {generationError && <p className="text-[11px] text-red-600">{generationError}</p>}
+
+      {isGenerating && (
+        <GenerationProgress
+          stage={generationStage}
+          startedAt={generationStartedAt}
+          onCancel={cancelGeneration}
+        />
+      )}
+
+      {generationResult && !isGenerating && (
+        <>
+          {generationDurationMs !== null && (
+            <p className="text-[10px] text-muted-foreground">
+              Сгенерировано за {formatDuration(generationDurationMs)}
+            </p>
+          )}
+          <ResultView result={generationResult} />
+        </>
+      )}
     </div>
   );
 }
