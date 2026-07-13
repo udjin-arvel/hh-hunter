@@ -55,13 +55,6 @@ export async function saveSettings(settings: GenerationSettings): Promise<void> 
   }));
 }
 
-export async function saveApiKey(apiKey: string): Promise<void> {
-  await updatePersistedState((current) => ({
-    ...current,
-    apiKey,
-  }));
-}
-
 export async function saveActiveTab(activeTab: TabKey): Promise<void> {
   await updatePersistedState((current) => ({
     ...current,

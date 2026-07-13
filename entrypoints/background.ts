@@ -1,4 +1,5 @@
-import { generateLetter, verifyDeepSeekApiKey } from "../lib/api/deepseek";
+import { generateLetter } from "../lib/api/deepseek";
+import { getDeepSeekApiKey } from "../lib/deepseek-config";
 import { fetchHhVacancy } from "../lib/api/hh";
 import { toAppError } from "../lib/errors";
 import { fetchPortfolioPage } from "../lib/portfolio-import";
@@ -17,9 +18,6 @@ import {
   importPortfolioErrorSchema,
   importPortfolioMessageSchema,
   importPortfolioSuccessSchema,
-  verifyApiKeyErrorSchema,
-  verifyApiKeyMessageSchema,
-  verifyApiKeySuccessSchema,
 } from "../lib/schemas";
 
 let activeGenerationAbort: AbortController | null = null;
@@ -99,33 +97,6 @@ export default defineBackground(() => {
       return true;
     }
 
-    const verifyApiKeyMessage = verifyApiKeyMessageSchema.safeParse(message);
-
-    if (verifyApiKeyMessage.success) {
-      void (async () => {
-        try {
-          await verifyDeepSeekApiKey(verifyApiKeyMessage.data.apiKey);
-          sendResponse(
-            verifyApiKeySuccessSchema.parse({
-              type: "verify_api_key_result",
-              ok: true,
-            }),
-          );
-        } catch (error) {
-          const appError = toAppError(error);
-          sendResponse(
-            verifyApiKeyErrorSchema.parse({
-              type: "verify_api_key_result",
-              ok: false,
-              error: appError,
-            }),
-          );
-        }
-      })();
-
-      return true;
-    }
-
     const generateLetterMessage = generateLetterMessageSchema.safeParse(message);
 
     if (generateLetterMessage.success) {
@@ -135,9 +106,9 @@ export default defineBackground(() => {
         activeGenerationAbort = abortController;
 
         try {
-          const { apiKey, profile, vacancy, settings } = generateLetterMessage.data;
+          const { profile, vacancy, settings } = generateLetterMessage.data;
           const request = buildGenerationRequest(profile, vacancy, settings);
-          const result = await generateLetter(apiKey, request, settings.length, {
+          const result = await generateLetter(getDeepSeekApiKey(), request, settings.length, {
             signal: abortController.signal,
           });
           sendResponse(

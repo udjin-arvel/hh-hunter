@@ -30,7 +30,6 @@ export function GeneratorTab() {
   const settings = useAppStore((state) => state.settings);
   const updateSettings = useAppStore((state) => state.updateSettings);
   const vacancy = useAppStore((state) => state.vacancy);
-  const apiKey = useAppStore((state) => state.apiKey);
   const activeTabUrl = useAppStore((state) => state.activeTabUrl);
   const isHhVacancyTab = useAppStore((state) => state.isHhVacancyTab);
   const manualVacancyUrl = useAppStore((state) => state.manualVacancyUrl);
@@ -51,7 +50,7 @@ export function GeneratorTab() {
   const generateLetter = useAppStore((state) => state.generateLetter);
   const cancelGeneration = useAppStore((state) => state.cancelGeneration);
 
-  const canGenerate = !generationInputError && Boolean(apiKey.trim()) && !isGenerating;
+  const canGenerate = !generationInputError && !isGenerating;
 
   useEffect(() => {
     void refreshActiveTabInfo();

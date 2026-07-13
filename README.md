@@ -5,11 +5,18 @@ Chrome-расширение для генерации персонализиро
 ## Быстрый старт
 
 ```bash
+cp .env.example .env
+# Укажите WXT_DEEPSEEK_API_KEY в .env
+
 make install
 make dev
 ```
 
 Откройте `chrome://extensions`, включите режим разработчика и загрузите unpacked из `.output/chrome-mv3`.
+
+## Конфигурация
+
+Перед сборкой или запуском скопируйте [`.env.example`](.env.example) в `.env` и задайте `WXT_DEEPSEEK_API_KEY`. Файл `.env` не коммитится в git. Ключ используется только в background service worker при запросах к DeepSeek.
 
 ## Makefile
 

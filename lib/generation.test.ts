@@ -46,17 +46,8 @@ function buildValidResult(wordCount: number) {
 }
 
 describe("validateGenerationInput", () => {
-  it("rejects missing api key", () => {
-    const result = validateGenerationInput(profile, vacancy, settings, "");
-
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error.message).toContain("API-ключ");
-    }
-  });
-
   it("rejects missing vacancy", () => {
-    const result = validateGenerationInput(profile, null, settings, "sk-test");
+    const result = validateGenerationInput(profile, null, settings);
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
@@ -70,7 +61,7 @@ describe("validateGenerationInput", () => {
       achievements: "короткий текст",
     };
 
-    const result = validateGenerationInput(shortProfile, vacancy, settings, "sk-test");
+    const result = validateGenerationInput(shortProfile, vacancy, settings);
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
@@ -79,7 +70,7 @@ describe("validateGenerationInput", () => {
   });
 
   it("accepts valid profile and vacancy", () => {
-    const result = validateGenerationInput(profile, vacancy, settings, "sk-test");
+    const result = validateGenerationInput(profile, vacancy, settings);
 
     expect(result).toEqual({ ok: true });
   });

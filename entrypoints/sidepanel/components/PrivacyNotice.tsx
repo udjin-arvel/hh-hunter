@@ -6,9 +6,8 @@ export function PrivacyNotice({ variant = "short" }: PrivacyNoticeProps) {
   if (variant === "short") {
     return (
       <div className="rounded-xl bg-surface p-3 text-[11px] leading-relaxed text-muted-foreground">
-        Профиль, настройки и API-ключ хранятся локально в браузере. При генерации в DeepSeek
-        отправляются имя, опыт, данные вакансии и параметры письма. Запросы к HH API — только по ID
-        вакансии.
+        Профиль и настройки хранятся локально в браузере. При генерации в DeepSeek отправляются имя,
+        опыт, данные вакансии и параметры письма. Запросы к HH API — только по ID вакансии.
       </div>
     );
   }
@@ -18,8 +17,8 @@ export function PrivacyNotice({ variant = "short" }: PrivacyNoticeProps) {
       <p className="font-medium text-foreground">Конфиденциальность</p>
       <ul className="space-y-1.5">
         <li>
-          <span className="text-foreground">Локально:</span> профиль, настройки генерации и API-ключ
-          DeepSeek в <span className="font-mono">chrome.storage.local</span>.
+          <span className="text-foreground">Локально:</span> профиль и настройки генерации в{" "}
+          <span className="font-mono">chrome.storage.local</span>.
         </li>
         <li>
           <span className="text-foreground">DeepSeek:</span> при нажатии «Сгенерировать» — имя,

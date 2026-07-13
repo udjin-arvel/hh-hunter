@@ -115,30 +115,8 @@ export const fetchVacancyResponseSchema = z.discriminatedUnion("ok", [
   fetchVacancyErrorSchema,
 ]);
 
-export const verifyApiKeyMessageSchema = z.object({
-  type: z.literal("verify_api_key"),
-  apiKey: z.string().min(1),
-});
-
-export const verifyApiKeySuccessSchema = z.object({
-  type: z.literal("verify_api_key_result"),
-  ok: z.literal(true),
-});
-
-export const verifyApiKeyErrorSchema = z.object({
-  type: z.literal("verify_api_key_result"),
-  ok: z.literal(false),
-  error: appErrorSchema,
-});
-
-export const verifyApiKeyResponseSchema = z.discriminatedUnion("ok", [
-  verifyApiKeySuccessSchema,
-  verifyApiKeyErrorSchema,
-]);
-
 export const generateLetterMessageSchema = z.object({
   type: z.literal("generate_letter"),
-  apiKey: z.string().min(1),
   profile: profileSchema,
   vacancy: vacancySchema,
   settings: generationSettingsSchema,
@@ -170,15 +148,14 @@ export const cancelGenerateLetterResponseSchema = z.object({
   ok: z.literal(true),
 });
 
-export const STORAGE_VERSION = 1;
+export const STORAGE_VERSION = 2;
 
-export const tabKeySchema = z.enum(["profile", "generator", "api"]);
+export const tabKeySchema = z.enum(["profile", "generator"]);
 
 export const persistedStateSchema = z.object({
   version: z.literal(STORAGE_VERSION),
   profile: profileSchema,
   settings: generationSettingsSchema,
-  apiKey: z.string().default(""),
   ui: z
     .object({
       activeTab: tabKeySchema.default("generator"),

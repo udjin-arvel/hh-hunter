@@ -8,8 +8,6 @@ import {
   generateLetterResponseSchema,
   importPortfolioMessageSchema,
   importPortfolioResponseSchema,
-  verifyApiKeyMessageSchema,
-  verifyApiKeyResponseSchema,
 } from "./schemas";
 import type { AppError, GenerationResult, GenerationSettings, Profile, Vacancy } from "./types";
 
@@ -54,33 +52,13 @@ export async function fetchVacancyById(vacancyId: string, sourceUrl?: string): P
   return parsed.data.vacancy;
 }
 
-export async function verifyApiKey(apiKey: string): Promise<void> {
-  const message = verifyApiKeyMessageSchema.parse({
-    type: "verify_api_key",
-    apiKey,
-  });
-
-  const response = await browser.runtime.sendMessage(message);
-  const parsed = verifyApiKeyResponseSchema.safeParse(response);
-
-  if (!parsed.success) {
-    throw toAppError(new Error("Некорректный ответ service worker"));
-  }
-
-  if (!parsed.data.ok) {
-    throw parsed.data.error;
-  }
-}
-
 export async function generateLetterFromContext(
-  apiKey: string,
   profile: Profile,
   vacancy: Vacancy,
   settings: GenerationSettings,
 ): Promise<GenerationResult> {
   const message = generateLetterMessageSchema.parse({
     type: "generate_letter",
-    apiKey,
     profile,
     vacancy,
     settings,

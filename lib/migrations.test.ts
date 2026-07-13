@@ -19,24 +19,28 @@ describe("migrateRawStorage edge cases", () => {
     expect(result).toEqual(DEFAULT_PERSISTED_STATE);
   });
 
-  it("falls back when v1 profile fields have invalid types", () => {
+  it("migrates v1 to v2 without apiKey", () => {
     const result = migrateRawStorage({
       version: 1,
       profile: {
         name: "Test",
-        portfolioLink: null,
-        achievements: ["not", "a", "string"],
+        portfolioLink: "",
+        portfolioText: "",
+        achievements: "опыт",
       },
       settings: {
         style: "business",
         length: "medium",
         focus: "",
       },
-      apiKey: "",
-      ui: { activeTab: "generator" },
+      apiKey: "sk-old-user-key",
+      ui: { activeTab: "api" },
     });
 
-    expect(result).toEqual(DEFAULT_PERSISTED_STATE);
+    expect(result.version).toBe(2);
+    expect(result.profile.name).toBe("Test");
+    expect(result.ui.activeTab).toBe("generator");
+    expect("apiKey" in result).toBe(false);
   });
 
   it("migrates legacy v0 with partial profile and settings", () => {
@@ -44,7 +48,7 @@ describe("migrateRawStorage edge cases", () => {
       profile: { name: "Legacy User" },
     });
 
-    expect(result.version).toBe(1);
+    expect(result.version).toBe(2);
     expect(result.profile.name).toBe("Legacy User");
     expect(result.profile.achievements).toBe("");
     expect(result.settings.style).toBe("business");
@@ -57,20 +61,20 @@ describe("migrateRawStorage edge cases", () => {
       profile: null,
       settings: "invalid",
       ui: 0,
-      apiKey: 123,
+      apiKey: "sk-test-key",
     });
 
-    expect(result.version).toBe(1);
+    expect(result.version).toBe(2);
     expect(result.profile.name).toBe("");
-    expect(result.apiKey).toBe("");
     expect(result.ui.activeTab).toBe("generator");
+    expect("apiKey" in result).toBe(false);
   });
 
-  it("preserves apiKey string in legacy v0", () => {
+  it("does not preserve apiKey from legacy v0", () => {
     const result = migrateRawStorage({
       apiKey: "sk-test-key",
     });
 
-    expect(result.apiKey).toBe("sk-test-key");
+    expect("apiKey" in result).toBe(false);
   });
 });

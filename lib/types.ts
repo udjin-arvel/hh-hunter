@@ -29,16 +29,14 @@ export type TabKey = z.infer<typeof tabKeySchema>;
 export type PersistedState = z.infer<typeof persistedStateSchema>;
 
 export type GenerationStage = "idle" | "analyzing" | "intersection" | "writing";
-export type ApiKeyStatus = "unchecked" | "valid" | "invalid";
 
 export const DEFAULT_PROFILE: Profile = profileSchema.parse({});
 export const DEFAULT_GENERATION_SETTINGS: GenerationSettings = generationSettingsSchema.parse({});
 
 export const DEFAULT_PERSISTED_STATE: PersistedState = persistedStateSchema.parse({
-  version: 1,
+  version: 2,
   profile: DEFAULT_PROFILE,
   settings: DEFAULT_GENERATION_SETTINGS,
-  apiKey: "",
   ui: { activeTab: "generator" },
 });
 

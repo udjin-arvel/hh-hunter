@@ -31,15 +31,7 @@ export function validateGenerationInput(
   profile: Profile,
   vacancy: Vacancy | null,
   _settings: GenerationSettings,
-  apiKey: string,
 ): { ok: true } | { ok: false; error: AppError } {
-  if (!apiKey.trim()) {
-    return {
-      ok: false,
-      error: createAppError("VALIDATION", "Укажите API-ключ DeepSeek на вкладке «Настройки API»."),
-    };
-  }
-
   if (!vacancy) {
     return {
       ok: false,

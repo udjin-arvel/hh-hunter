@@ -15,7 +15,7 @@ describe("migrateRawStorage", () => {
       settings: { style: "emotional" },
     });
 
-    expect(migrated.version).toBe(1);
+    expect(migrated.version).toBe(2);
     expect(migrated.profile.name).toBe("Test");
     expect(migrated.settings.style).toBe("emotional");
   });

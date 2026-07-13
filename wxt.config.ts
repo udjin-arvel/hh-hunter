@@ -8,7 +8,7 @@ export default defineConfig({
   }),
   manifest: {
     name: "HH-Hunter",
-    version: "1.0.0",
+    version: "1.1.0",
     description:
       "Генерация персонализированных сопроводительных писем для вакансий HeadHunter с помощью DeepSeek.",
     permissions: ["storage", "activeTab", "sidePanel", "tabs"],

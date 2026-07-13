@@ -3,7 +3,6 @@ import type { TabKey } from "@/lib/types";
 const TABS: [TabKey, string][] = [
   ["profile", "Профиль"],
   ["generator", "Генератор"],
-  ["api", "API"],
 ];
 
 interface TabBarProps {

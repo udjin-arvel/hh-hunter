@@ -15,20 +15,17 @@ import {
   generateLetterFromContext,
   getErrorMessage,
   importPortfolioFromUrl,
-  verifyApiKey as verifyApiKeyRequest,
 } from "./messaging";
 import { buildGenerationRequest as createGenerationRequest } from "./prompts";
 import { getProfilePreviewText, truncatePreview, validatePortfolioUrl } from "./profile";
 import {
   loadPersistedState,
   saveActiveTab,
-  saveApiKey as persistApiKey,
   saveProfile as persistProfile,
   saveSettings as persistSettings,
 } from "./storage";
 import {
   DEFAULT_PERSISTED_STATE,
-  type ApiKeyStatus,
   type GenerationRequest,
   type GenerationResult,
   type GenerationSettings,
@@ -51,7 +48,6 @@ interface AppState {
   profilePreview: string | null;
   profile: Profile;
   settings: GenerationSettings;
-  apiKey: string;
   vacancy: Vacancy | null;
   activeTabUrl: string | null;
   isHhVacancyTab: boolean;
@@ -63,9 +59,6 @@ interface AppState {
   isGenerating: boolean;
   generationError: string | null;
   generationStage: GenerationStage;
-  apiKeyStatus: ApiKeyStatus;
-  apiKeyVerifyError: string | null;
-  isVerifyingApiKey: boolean;
   letterDraft: string | null;
   copyFeedback: "success" | "error" | null;
   generationStartedAt: number | null;
@@ -74,7 +67,6 @@ interface AppState {
   setActiveTab: (tab: TabKey) => Promise<void>;
   updateProfile: (patch: Partial<Profile>) => void;
   updateSettings: (patch: Partial<GenerationSettings>) => void;
-  setApiKey: (key: string) => void;
   importPortfolio: () => Promise<void>;
   clearProfilePreview: () => void;
   setManualVacancyUrl: (url: string) => void;
@@ -90,11 +82,9 @@ interface AppState {
   openVacancyReply: () => void;
   updateLetterDraft: (text: string) => void;
   copyLetterToClipboard: () => Promise<void>;
-  verifyApiKey: () => Promise<void>;
   clearGenerationResult: () => void;
   saveProfile: () => Promise<void>;
   saveSettings: () => Promise<void>;
-  saveApiKey: () => Promise<void>;
   loadFromStorage: () => Promise<void>;
 }
 
@@ -107,9 +97,8 @@ function resolveGenerationInputError(
   profile: Profile,
   vacancy: Vacancy | null,
   settings: GenerationSettings,
-  apiKey: string,
 ): string | null {
-  const result = validateGenerationInput(profile, vacancy, settings, apiKey);
+  const result = validateGenerationInput(profile, vacancy, settings);
   return result.ok ? null : result.error.message;
 }
 
@@ -127,7 +116,6 @@ export const useAppStore = create<AppState>((set, get) => ({
   profilePreview: null,
   profile: DEFAULT_PERSISTED_STATE.profile,
   settings: DEFAULT_PERSISTED_STATE.settings,
-  apiKey: DEFAULT_PERSISTED_STATE.apiKey,
   vacancy: null,
   activeTabUrl: null,
   isHhVacancyTab: false,
@@ -139,9 +127,6 @@ export const useAppStore = create<AppState>((set, get) => ({
   isGenerating: false,
   generationError: null,
   generationStage: "idle",
-  apiKeyStatus: "unchecked",
-  apiKeyVerifyError: null,
-  isVerifyingApiKey: false,
   letterDraft: null,
   copyFeedback: null,
   generationStartedAt: null,
@@ -153,20 +138,12 @@ export const useAppStore = create<AppState>((set, get) => ({
       activeTab: data.ui.activeTab,
       profile: data.profile,
       settings: data.settings,
-      apiKey: data.apiKey,
       saveError: null,
       portfolioImportError: null,
       portfolioImportSuccess: false,
       profileUrlError: null,
       profilePreview: buildProfilePreview(data.profile),
-      generationInputError: resolveGenerationInputError(
-        data.profile,
-        null,
-        data.settings,
-        data.apiKey,
-      ),
-      apiKeyStatus: "unchecked",
-      apiKeyVerifyError: null,
+      generationInputError: resolveGenerationInputError(data.profile, null, data.settings),
     });
   },
 
@@ -192,12 +169,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         profile,
         profileUrlError,
         portfolioImportSuccess: false,
-        generationInputError: resolveGenerationInputError(
-          profile,
-          state.vacancy,
-          state.settings,
-          state.apiKey,
-        ),
+        generationInputError: resolveGenerationInputError(profile, state.vacancy, state.settings),
       };
     });
   },
@@ -206,12 +178,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     const nextSettings = { ...get().settings, ...patch };
     set({
       settings: nextSettings,
-      generationInputError: resolveGenerationInputError(
-        get().profile,
-        get().vacancy,
-        nextSettings,
-        get().apiKey,
-      ),
+      generationInputError: resolveGenerationInputError(get().profile, get().vacancy, nextSettings),
     });
 
     void (async () => {
@@ -225,20 +192,6 @@ export const useAppStore = create<AppState>((set, get) => ({
         set({ isSaving: false });
       }
     })();
-  },
-
-  setApiKey: (key) => {
-    set((state) => ({
-      apiKey: key,
-      apiKeyStatus: "unchecked",
-      apiKeyVerifyError: null,
-      generationInputError: resolveGenerationInputError(
-        state.profile,
-        state.vacancy,
-        state.settings,
-        key,
-      ),
-    }));
   },
 
   importPortfolio: async () => {
@@ -272,7 +225,6 @@ export const useAppStore = create<AppState>((set, get) => ({
           { ...state.profile, portfolioText: text },
           state.vacancy,
           state.settings,
-          state.apiKey,
         ),
       }));
     } catch (error) {
@@ -334,12 +286,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       set({
         vacancy,
         manualVacancyUrl: sourceUrl ?? get().manualVacancyUrl,
-        generationInputError: resolveGenerationInputError(
-          get().profile,
-          vacancy,
-          get().settings,
-          get().apiKey,
-        ),
+        generationInputError: resolveGenerationInputError(get().profile, vacancy, get().settings),
       });
     } catch (error) {
       set({ vacancyError: getErrorMessage(error) });
@@ -366,12 +313,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       set({
         vacancy,
         manualVacancyUrl: sourceUrl ?? input,
-        generationInputError: resolveGenerationInputError(
-          get().profile,
-          vacancy,
-          get().settings,
-          get().apiKey,
-        ),
+        generationInputError: resolveGenerationInputError(get().profile, vacancy, get().settings),
       });
     } catch (error) {
       set({ vacancyError: getErrorMessage(error) });
@@ -384,23 +326,18 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({
       vacancy: null,
       vacancyError: null,
-      generationInputError: resolveGenerationInputError(
-        get().profile,
-        null,
-        get().settings,
-        get().apiKey,
-      ),
+      generationInputError: resolveGenerationInputError(get().profile, null, get().settings),
     });
   },
 
   checkGenerationReadiness: () => {
-    const { profile, vacancy, settings, apiKey } = get();
-    set({ generationInputError: resolveGenerationInputError(profile, vacancy, settings, apiKey) });
+    const { profile, vacancy, settings } = get();
+    set({ generationInputError: resolveGenerationInputError(profile, vacancy, settings) });
   },
 
   buildGenerationRequest: () => {
-    const { profile, vacancy, settings, apiKey } = get();
-    const validation = validateGenerationInput(profile, vacancy, settings, apiKey);
+    const { profile, vacancy, settings } = get();
+    const validation = validateGenerationInput(profile, vacancy, settings);
 
     if (!validation.ok) {
       set({ generationInputError: validation.error.message });
@@ -416,13 +353,13 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   generateLetter: async () => {
-    const { profile, vacancy, settings, apiKey, isGenerating } = get();
+    const { profile, vacancy, settings, isGenerating } = get();
 
     if (isGenerating) {
       return;
     }
 
-    const validation = validateGenerationInput(profile, vacancy, settings, apiKey);
+    const validation = validateGenerationInput(profile, vacancy, settings);
 
     if (!validation.ok) {
       set({
@@ -466,7 +403,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     );
 
     try {
-      const result = await generateLetterFromContext(apiKey, profile, vacancy, settings);
+      const result = await generateLetterFromContext(profile, vacancy, settings);
       set({ generationResult: result, generationError: null, letterDraft: null });
     } catch (error) {
       const message = getErrorMessage(error);
@@ -545,29 +482,6 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
 
-  verifyApiKey: async () => {
-    const { apiKey } = get();
-
-    if (!apiKey.trim()) {
-      set({
-        apiKeyStatus: "invalid",
-        apiKeyVerifyError: "Укажите API-ключ перед проверкой.",
-      });
-      return;
-    }
-
-    set({ isVerifyingApiKey: true, apiKeyVerifyError: null });
-
-    try {
-      await verifyApiKeyRequest(apiKey);
-      set({ apiKeyStatus: "valid", apiKeyVerifyError: null });
-    } catch (error) {
-      set({ apiKeyStatus: "invalid", apiKeyVerifyError: getErrorMessage(error) });
-    } finally {
-      set({ isVerifyingApiKey: false });
-    }
-  },
-
   clearGenerationResult: () => {
     set({
       generationResult: null,
@@ -591,12 +505,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       await persistProfile(profile);
       set({
         profilePreview: buildProfilePreview(profile),
-        generationInputError: resolveGenerationInputError(
-          profile,
-          get().vacancy,
-          get().settings,
-          get().apiKey,
-        ),
+        generationInputError: resolveGenerationInputError(profile, get().vacancy, get().settings),
       });
     } catch (error) {
       set({ saveError: toAppError(error).message });
@@ -611,20 +520,6 @@ export const useAppStore = create<AppState>((set, get) => ({
     try {
       set({ isSaving: true, saveError: null });
       await persistSettings(settings);
-    } catch (error) {
-      set({ saveError: toAppError(error).message });
-      throw error;
-    } finally {
-      set({ isSaving: false });
-    }
-  },
-
-  saveApiKey: async () => {
-    const { apiKey } = get();
-    try {
-      set({ isSaving: true, saveError: null });
-      await persistApiKey(apiKey);
-      set({ apiKeyStatus: "unchecked", apiKeyVerifyError: null });
     } catch (error) {
       set({ saveError: toAppError(error).message });
       throw error;
