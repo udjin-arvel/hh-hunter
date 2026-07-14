@@ -7,6 +7,7 @@ import type {
   GenerationSettings,
   LetterLength,
   Profile,
+  ResponseFormat,
   Vacancy,
 } from "./types";
 import { getLetterWordRange } from "./types";
@@ -25,6 +26,13 @@ export function countWords(text: string): number {
   }
 
   return normalized.split(/\s+/).filter(Boolean).length;
+}
+
+export function countThesesLines(text: string): number {
+  return text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean).length;
 }
 
 export function validateGenerationInput(
@@ -57,6 +65,7 @@ export function validateGenerationInput(
 export function validateGenerationResult(
   value: unknown,
   expectedLength: LetterLength,
+  format: ResponseFormat = "letter",
 ): { ok: true; result: GenerationResult } | { ok: false; error: AppError } {
   const parsed = generationResultSchema.safeParse(value);
 
@@ -65,6 +74,10 @@ export function validateGenerationResult(
       ok: false,
       error: createAppError("VALIDATION", "Ответ модели не соответствует формату.", parsed.error),
     };
+  }
+
+  if (format === "theses") {
+    return { ok: true, result: parsed.data };
   }
 
   const wordCount = countWords(parsed.data.letter);
@@ -119,6 +132,7 @@ function extractJsonValue(raw: string): unknown | null {
 export function parseGenerationResult(
   raw: string,
   expectedLength: LetterLength,
+  format: ResponseFormat = "letter",
 ): { ok: true; result: GenerationResult } | { ok: false; error: AppError } {
   const value = extractJsonValue(raw);
 
@@ -129,5 +143,5 @@ export function parseGenerationResult(
     };
   }
 
-  return validateGenerationResult(value, expectedLength);
+  return validateGenerationResult(value, expectedLength, format);
 }

@@ -8,6 +8,7 @@ export function ProfileTab() {
   const profile = useAppStore((state) => state.profile);
   const updateProfile = useAppStore((state) => state.updateProfile);
   const saveProfile = useAppStore((state) => state.saveProfile);
+  const clearProfile = useAppStore((state) => state.clearProfile);
   const importPortfolio = useAppStore((state) => state.importPortfolio);
   const isSaving = useAppStore((state) => state.isSaving);
   const isImportingPortfolio = useAppStore((state) => state.isImportingPortfolio);
@@ -73,6 +74,15 @@ export function ProfileTab() {
         className="w-full rounded-xl bg-primary py-2.5 text-[13px] text-primary-foreground disabled:opacity-60"
       >
         {isSaving ? "Сохранение…" : "Сохранить профиль"}
+      </button>
+
+      <button
+        type="button"
+        disabled={isSaving}
+        onClick={() => void clearProfile()}
+        className="w-full rounded-xl border border-border bg-background py-2.5 text-[13px] text-foreground disabled:opacity-60"
+      >
+        Очистить профиль
       </button>
     </div>
   );

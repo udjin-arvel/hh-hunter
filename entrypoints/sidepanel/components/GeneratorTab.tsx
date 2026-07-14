@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 
 import { useAppStore } from "@/lib/store";
-import type { LetterLength, LetterStyle } from "@/lib/types";
+import type { LetterLength, LetterStyle, ResponseFormat } from "@/lib/types";
 
 import { GenerationProgress } from "./GenerationProgress";
 import { ResultView } from "./ResultView";
@@ -107,13 +107,22 @@ export function GeneratorTab() {
       {vacancy && <VacancyCard vacancy={vacancy} />}
 
       <div className="space-y-2.5">
+        <Segmented<ResponseFormat>
+          label="Формат"
+          value={settings.format}
+          onChange={(format) => updateSettings({ format })}
+          options={[
+            ["theses", "Тезисы"],
+            ["letter", "Готовое письмо"],
+          ]}
+        />
         <Segmented<LetterStyle>
           label="Стиль"
           value={settings.style}
           onChange={(style) => updateSettings({ style })}
           options={[
+            ["conversational", "Разгов."],
             ["business", "Деловой"],
-            ["emotional", "Эмоц."],
             ["metrics", "Цифры"],
           ]}
         />
@@ -138,7 +147,9 @@ export function GeneratorTab() {
           />
         </div>
         <p className="text-[10px] text-muted-foreground">
-          Кратко ~50 слов · Средне ~100 · Подробно ~180
+          {settings.format === "theses"
+            ? "Кратко 4–6 тезисов · Средне 6–9 · Подробно 8–12"
+            : "Кратко ~50 слов · Средне ~100 · Подробно ~180"}
         </p>
       </div>
 

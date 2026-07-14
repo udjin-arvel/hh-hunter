@@ -17,7 +17,8 @@ describe("migrateRawStorage", () => {
 
     expect(migrated.version).toBe(2);
     expect(migrated.profile.name).toBe("Test");
-    expect(migrated.settings.style).toBe("emotional");
+    expect(migrated.settings.style).toBe("conversational");
+    expect(migrated.settings.format).toBe("letter");
   });
 
   it("falls back for unknown version", () => {

@@ -1,4 +1,4 @@
-import { countWords, getDisplayLetter } from "@/lib/generation";
+import { countThesesLines, countWords, getDisplayLetter } from "@/lib/generation";
 import { useAppStore } from "@/lib/store";
 import type { GenerationResult } from "@/lib/types";
 
@@ -10,13 +10,17 @@ export function ResultView({ result }: ResultViewProps) {
   const letterDraft = useAppStore((state) => state.letterDraft);
   const isGenerating = useAppStore((state) => state.isGenerating);
   const copyFeedback = useAppStore((state) => state.copyFeedback);
+  const settings = useAppStore((state) => state.settings);
   const updateLetterDraft = useAppStore((state) => state.updateLetterDraft);
   const copyLetterToClipboard = useAppStore((state) => state.copyLetterToClipboard);
   const regenerateLetter = useAppStore((state) => state.regenerateLetter);
   const openVacancyReply = useAppStore((state) => state.openVacancyReply);
 
   const displayLetter = getDisplayLetter(letterDraft, result.letter);
-  const wordCount = countWords(displayLetter);
+  const isTheses = settings.format === "theses";
+  const counterLabel = isTheses
+    ? `${countThesesLines(displayLetter)} пунктов`
+    : `${countWords(displayLetter)} слов`;
 
   return (
     <div className="space-y-3 pt-1">
@@ -29,8 +33,8 @@ export function ResultView({ result }: ResultViewProps) {
 
       <div className="rounded-2xl border border-border p-3">
         <div className="mb-1.5 flex items-center justify-between text-[10px] uppercase tracking-wider text-muted-foreground">
-          <span>Готовое письмо</span>
-          <span>{wordCount} слов</span>
+          <span>{isTheses ? "Тезисы" : "Готовое письмо"}</span>
+          <span>{counterLabel}</span>
         </div>
         <textarea
           value={displayLetter}

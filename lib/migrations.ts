@@ -10,6 +10,14 @@ function normalizeActiveTab(value: unknown): "profile" | "generator" {
   return parsed.success ? parsed.data : "generator";
 }
 
+function normalizeLetterStyle(value: unknown): string {
+  if (value === "emotional") {
+    return "conversational";
+  }
+
+  return typeof value === "string" ? value : "business";
+}
+
 function migrateV1ToV2(raw: Record<string, unknown>): PersistedState {
   const profile = isRecord(raw.profile) ? raw.profile : {};
   const settings = isRecord(raw.settings) ? raw.settings : {};
@@ -24,7 +32,8 @@ function migrateV1ToV2(raw: Record<string, unknown>): PersistedState {
       achievements: profile.achievements ?? "",
     },
     settings: {
-      style: settings.style ?? "business",
+      format: settings.format ?? "letter",
+      style: normalizeLetterStyle(settings.style),
       length: settings.length ?? "medium",
       focus: settings.focus ?? "",
     },
@@ -55,7 +64,8 @@ function migrateLegacyV0(raw: Record<string, unknown>): PersistedState {
       achievements: profile.achievements ?? "",
     },
     settings: {
-      style: settings.style ?? "business",
+      format: settings.format ?? "letter",
+      style: normalizeLetterStyle(settings.style),
       length: settings.length ?? "medium",
       focus: settings.focus ?? "",
     },
@@ -76,7 +86,16 @@ export function migrateRawStorage(raw: unknown): PersistedState {
   }
 
   if (raw.version === STORAGE_VERSION) {
-    const parsed = persistedStateSchema.safeParse(raw);
+    const settings = isRecord(raw.settings) ? raw.settings : {};
+    const normalized = {
+      ...raw,
+      settings: {
+        ...settings,
+        format: settings.format ?? "letter",
+        style: normalizeLetterStyle(settings.style),
+      },
+    };
+    const parsed = persistedStateSchema.safeParse(normalized);
     if (parsed.success) {
       return parsed.data;
     }

@@ -21,6 +21,7 @@ describe("generationSettingsSchema", () => {
     const result = generationSettingsSchema.parse({});
 
     expect(result).toEqual({
+      format: "letter",
       style: "business",
       length: "medium",
       focus: "",

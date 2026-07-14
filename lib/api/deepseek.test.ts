@@ -25,7 +25,7 @@ function buildLetter(wordCount: number): string {
 
 function buildValidContent() {
   return JSON.stringify({
-    hidden_keys: ["ключ1", "ключ2"],
+    hidden_keys: ["ключ1", "ключ2", "ключ3"],
     unique_intersection: "Точка пересечения между опытом и вакансией достаточно длинная.",
     letter: buildLetter(100),
   });
@@ -110,7 +110,7 @@ describe("generateLetter", () => {
 
     const result = await generateLetter("sk-test", request, "medium");
 
-    expect(result.hidden_keys).toHaveLength(2);
+    expect(result.hidden_keys).toHaveLength(3);
     expect(result.letter).toContain("слово1");
     expect(fetch).toHaveBeenCalledWith(
       DEEPSEEK_API_URL,
@@ -178,7 +178,9 @@ describe("generateLetter", () => {
     );
 
     await expect(
-      generateLetter("sk-test", request, "medium", { signal: abortController.signal }),
+      generateLetter("sk-test", request, "medium", "letter", {
+        signal: abortController.signal,
+      }),
     ).rejects.toMatchObject({
       message: GENERATION_CANCELLED_MESSAGE,
     });

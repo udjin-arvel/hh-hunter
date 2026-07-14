@@ -85,6 +85,7 @@ interface AppState {
   copyLetterToClipboard: () => Promise<void>;
   clearGenerationResult: () => void;
   saveProfile: () => Promise<void>;
+  clearProfile: () => Promise<void>;
   saveSettings: () => Promise<void>;
   loadFromStorage: () => Promise<void>;
 }
@@ -535,6 +536,28 @@ export const useAppStore = create<AppState>((set, get) => ({
       await persistProfile(profile);
       set({
         profilePreview: buildProfilePreview(profile),
+        generationInputError: resolveGenerationInputError(profile, get().vacancy, get().settings),
+      });
+    } catch (error) {
+      set({ saveError: toAppError(error).message });
+      throw error;
+    } finally {
+      set({ isSaving: false });
+    }
+  },
+
+  clearProfile: async () => {
+    const profile = DEFAULT_PERSISTED_STATE.profile;
+
+    try {
+      set({ isSaving: true, saveError: null });
+      await persistProfile(profile);
+      set({
+        profile,
+        profilePreview: null,
+        profileUrlError: null,
+        portfolioImportError: null,
+        portfolioImportSuccess: false,
         generationInputError: resolveGenerationInputError(profile, get().vacancy, get().settings),
       });
     } catch (error) {

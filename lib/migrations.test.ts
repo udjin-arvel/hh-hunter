@@ -53,6 +53,7 @@ describe("migrateRawStorage edge cases", () => {
     expect(result.profile.achievements).toBe("");
     expect(result.settings.style).toBe("business");
     expect(result.settings.length).toBe("medium");
+    expect(result.settings.format).toBe("letter");
     expect(result.ui.activeTab).toBe("generator");
   });
 

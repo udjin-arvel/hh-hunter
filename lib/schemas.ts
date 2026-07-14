@@ -35,18 +35,21 @@ export const vacancySchema = z.object({
   url: z.string().url().optional(),
 });
 
-export const letterStyleSchema = z.enum(["business", "emotional", "metrics"]);
+export const letterStyleSchema = z.enum(["conversational", "business", "metrics"]);
 
 export const letterLengthSchema = z.enum(["short", "medium", "long"]);
 
+export const responseFormatSchema = z.enum(["letter", "theses"]);
+
 export const generationSettingsSchema = z.object({
+  format: responseFormatSchema.default("letter"),
   style: letterStyleSchema.default("business"),
   length: letterLengthSchema.default("medium"),
   focus: z.string().default(""),
 });
 
 export const generationResultSchema = z.object({
-  hidden_keys: z.array(z.string().min(1)).min(2).max(3),
+  hidden_keys: z.array(z.string().min(1)).min(3).max(10),
   unique_intersection: z.string().min(20),
   letter: z.string().min(1),
 });

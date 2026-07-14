@@ -121,9 +121,15 @@ export default defineBackground(() => {
         try {
           const { profile, vacancy, settings } = generateLetterMessage.data;
           const request = buildGenerationRequest(profile, vacancy, settings);
-          const result = await generateLetter(getDeepSeekApiKey(), request, settings.length, {
-            signal: abortController.signal,
-          });
+          const result = await generateLetter(
+            getDeepSeekApiKey(),
+            request,
+            settings.length,
+            settings.format,
+            {
+              signal: abortController.signal,
+            },
+          );
           sendResponse(
             generateLetterSuccessSchema.parse({
               type: "generate_letter_result",
