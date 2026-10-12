@@ -175,8 +175,8 @@ describe("buildUserPrompt", () => {
 
     expect(prompt).toContain("примерно 50 слов");
     expect(prompt).toContain("коротко и по делу");
-    expect(prompt).toContain("Добрый день");
-    expect(prompt).toContain("меня заинтересовала ваша вакансия");
+    expect(prompt).toContain("Здравствуйте. Я");
+    expect(prompt).toContain("Добрый день, я");
   });
 });
 
@@ -203,6 +203,9 @@ describe("SYSTEM_PROMPT", () => {
     expect(SYSTEM_PROMPT).toContain("уровень фантазии");
     expect(SYSTEM_PROMPT).toContain("преимущественно на английском");
     expect(SYSTEM_PROMPT).toContain("только на русском");
+    expect(SYSTEM_PROMPT).toContain("Здравствуйте. Я");
+    expect(SYSTEM_PROMPT).toContain("мета-фразы");
+    expect(SYSTEM_PROMPT).toContain("длинное тире");
   });
 });
 
