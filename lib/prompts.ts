@@ -279,7 +279,7 @@ ${portfolioText}
 ${description}
 Навыки: ${keySkills}.
 
-**Пожелания пользователя:** Стиль: Деловой. Язык: ${languageRule} ${lengthInstruction} ${thesesInstruction}${fantasyLabel}. ${fantasyInstruction} Дополнительный фокус:
+**Пожелания пользователя:** Стиль: Деловой. Язык: ${languageRule} ${lengthInstruction} ${thesesInstruction}${fantasyLabel}. ${fantasyInstruction} Пользовательский промпт (дополнительные пожелания):
 ${userFocus}
 
 **Примеры писем кандидата:**

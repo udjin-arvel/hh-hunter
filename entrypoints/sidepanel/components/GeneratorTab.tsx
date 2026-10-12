@@ -187,13 +187,14 @@ export function GeneratorTab() {
           )}
         </div>
         <div>
-          <div className="mb-1 text-[11px] text-muted-foreground">Дополнительный фокус</div>
-          <input
+          <div className="mb-1 text-[11px] text-muted-foreground">Пользовательский промпт</div>
+          <textarea
             value={settings.focus}
             onChange={(event) => updateSettings({ focus: event.target.value })}
-            placeholder="Напр. акцент на управлении командами…"
+            placeholder="Любые дополнительные пожелания к письму…"
             maxLength={500}
-            className="w-full rounded-xl border border-border bg-background px-3 py-2 text-[12px] outline-none placeholder:text-muted-foreground focus:border-foreground"
+            rows={2}
+            className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2 text-[12px] leading-snug outline-none placeholder:text-muted-foreground focus:border-foreground"
           />
         </div>
         <p className="text-[10px] text-muted-foreground">
