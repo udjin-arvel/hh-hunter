@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { createAppError, isAppError } from "./errors";
-import { generationSettingsSchema, profileSchema } from "./schemas";
+import { createAppError, isAppError } from "@/lib/errors";
+import { generationSettingsSchema, profileSchema } from "@/lib/schemas";
 
 describe("profileSchema", () => {
   it("accepts empty profile with defaults", () => {
@@ -24,6 +24,8 @@ describe("generationSettingsSchema", () => {
       focus: "",
       fantasy: "medium",
       exampleIds: [],
+      includeTheses: true,
+      includeHiddenKeys: true,
     });
   });
 });

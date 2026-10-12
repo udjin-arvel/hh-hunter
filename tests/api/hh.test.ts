@@ -7,7 +7,7 @@ import {
   mapHhVacancyToLocal,
   truncateVacancyDescription,
   type HhVacancyResponse,
-} from "./hh";
+} from "@/lib/api/hh";
 
 const baseApiResponse: HhVacancyResponse = {
   id: "128456712",

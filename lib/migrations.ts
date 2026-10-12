@@ -37,11 +37,17 @@ function normalizeProfileFromLegacy(profile: Record<string, unknown>): {
   };
 }
 
+function normalizeBoolean(value: unknown, fallback: boolean): boolean {
+  return typeof value === "boolean" ? value : fallback;
+}
+
 function normalizeSettingsFromLegacy(settings: Record<string, unknown>): {
   length: "short" | "medium" | "long";
   focus: string;
   fantasy: "low" | "medium" | "high";
   exampleIds: string[];
+  includeTheses: boolean;
+  includeHiddenKeys: boolean;
 } {
   const length =
     settings.length === "short" || settings.length === "long" ? settings.length : "medium";
@@ -53,6 +59,8 @@ function normalizeSettingsFromLegacy(settings: Record<string, unknown>): {
     exampleIds: Array.isArray(settings.exampleIds)
       ? settings.exampleIds.filter((id): id is string => typeof id === "string")
       : [],
+    includeTheses: normalizeBoolean(settings.includeTheses, true),
+    includeHiddenKeys: normalizeBoolean(settings.includeHiddenKeys, true),
   };
 }
 

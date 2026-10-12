@@ -9,7 +9,23 @@ import type {
   Profile,
   Vacancy,
 } from "./types";
-import { getLetterWordRange, THESES_COUNT_MAX, THESES_COUNT_MIN } from "./types";
+import {
+  getLetterWordRange,
+  HIDDEN_KEYS_COUNT_MAX,
+  HIDDEN_KEYS_COUNT_MIN,
+  THESES_COUNT_MAX,
+  THESES_COUNT_MIN,
+} from "./types";
+
+export interface GenerationOutputOptions {
+  includeTheses: boolean;
+  includeHiddenKeys: boolean;
+}
+
+const DEFAULT_GENERATION_OUTPUT: GenerationOutputOptions = {
+  includeTheses: true,
+  includeHiddenKeys: true,
+};
 
 const MIN_PROFILE_CHARS = 100;
 
@@ -61,7 +77,7 @@ export function validateGenerationInput(
       ok: false,
       error: createAppError(
         "VALIDATION",
-        "Импортируйте резюме с hh.ru (минимум 100 символов).",
+        "Сохраните резюме на вкладке «Профиль» (минимум 100 символов).",
       ),
     };
   }
@@ -69,11 +85,34 @@ export function validateGenerationInput(
   return { ok: true };
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function applyOutputOptions(value: unknown, output: GenerationOutputOptions): unknown {
+  if (!isRecord(value)) {
+    return value;
+  }
+
+  const next = { ...value };
+
+  if (!output.includeHiddenKeys) {
+    delete next.hidden_keys;
+  }
+
+  if (!output.includeTheses) {
+    delete next.theses;
+  }
+
+  return next;
+}
+
 export function validateGenerationResult(
   value: unknown,
   expectedLength: LetterLength,
+  output: GenerationOutputOptions = DEFAULT_GENERATION_OUTPUT,
 ): { ok: true; result: GenerationResult } | { ok: false; error: AppError } {
-  const parsed = generationResultSchema.safeParse(value);
+  const parsed = generationResultSchema.safeParse(applyOutputOptions(value, output));
 
   if (!parsed.success) {
     return {
@@ -95,16 +134,32 @@ export function validateGenerationResult(
     };
   }
 
-  const thesesCount = parsed.data.theses.length;
+  if (output.includeHiddenKeys) {
+    const hiddenKeysCount = parsed.data.hidden_keys.length;
 
-  if (thesesCount < THESES_COUNT_MIN || thesesCount > THESES_COUNT_MAX) {
-    return {
-      ok: false,
-      error: createAppError(
-        "VALIDATION",
-        `Количество тезисов (${thesesCount}) должно быть от ${THESES_COUNT_MIN} до ${THESES_COUNT_MAX}.`,
-      ),
-    };
+    if (hiddenKeysCount < HIDDEN_KEYS_COUNT_MIN || hiddenKeysCount > HIDDEN_KEYS_COUNT_MAX) {
+      return {
+        ok: false,
+        error: createAppError(
+          "VALIDATION",
+          `Количество скрытых ключей (${hiddenKeysCount}) должно быть от ${HIDDEN_KEYS_COUNT_MIN} до ${HIDDEN_KEYS_COUNT_MAX}.`,
+        ),
+      };
+    }
+  }
+
+  if (output.includeTheses) {
+    const thesesCount = parsed.data.theses.length;
+
+    if (thesesCount < THESES_COUNT_MIN || thesesCount > THESES_COUNT_MAX) {
+      return {
+        ok: false,
+        error: createAppError(
+          "VALIDATION",
+          `Количество тезисов (${thesesCount}) должно быть от ${THESES_COUNT_MIN} до ${THESES_COUNT_MAX}.`,
+        ),
+      };
+    }
   }
 
   return { ok: true, result: parsed.data };
@@ -146,6 +201,7 @@ function extractJsonValue(raw: string): unknown | null {
 export function parseGenerationResult(
   raw: string,
   expectedLength: LetterLength,
+  output: GenerationOutputOptions = DEFAULT_GENERATION_OUTPUT,
 ): { ok: true; result: GenerationResult } | { ok: false; error: AppError } {
   const value = extractJsonValue(raw);
 
@@ -156,5 +212,5 @@ export function parseGenerationResult(
     };
   }
 
-  return validateGenerationResult(value, expectedLength);
+  return validateGenerationResult(value, expectedLength, output);
 }

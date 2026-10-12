@@ -2,15 +2,19 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildGenerationRequest,
+  buildProfileCompressUserPrompt,
+  buildSystemPrompt,
   buildUserPrompt,
   MAX_EXAMPLE_PROMPT_CHARS,
   MAX_PORTFOLIO_PROMPT_CHARS,
+  MAX_PROFILE_COMPRESS_INPUT_CHARS,
   MAX_USER_FOCUS_CHARS,
+  PROFILE_COMPRESS_SYSTEM_PROMPT,
   resolveSelectedExamples,
   SYSTEM_PROMPT,
   VACANCY_LANGUAGE_RULE,
-} from "./prompts";
-import type { GenerationSettings, LetterExample, Profile, Vacancy } from "./types";
+} from "@/lib/prompts";
+import type { GenerationSettings, LetterExample, Profile, Vacancy } from "@/lib/types";
 
 const profile: Profile = {
   name: "Александр Иванов",
@@ -36,6 +40,8 @@ const settings: GenerationSettings = {
   focus: "Акцент на управлении командами",
   fantasy: "medium",
   exampleIds: [],
+  includeTheses: true,
+  includeHiddenKeys: true,
 };
 
 const example: LetterExample = {
@@ -129,6 +135,41 @@ describe("buildUserPrompt", () => {
     );
   });
 
+  it("omits theses and hidden keys from the prompt when disabled", () => {
+    const disabled = {
+      ...settings,
+      includeTheses: false,
+      includeHiddenKeys: false,
+    };
+    const prompt = buildUserPrompt(profile, vacancy, disabled);
+    const system = buildSystemPrompt(disabled);
+
+    expect(prompt).not.toContain("theses");
+    expect(prompt).not.toContain("hidden_keys");
+    expect(prompt).not.toContain("Тезисы");
+    expect(prompt).toContain("unique_intersection");
+    expect(prompt).toContain("связное письмо (letter)");
+    expect(system).not.toContain("theses");
+    expect(system).not.toContain("hidden_keys");
+    expect(system).toContain('"letter"');
+  });
+
+  it("includes only the enabled optional blocks", () => {
+    const thesesOnly = buildUserPrompt(profile, vacancy, {
+      ...settings,
+      includeHiddenKeys: false,
+    });
+    const keysOnly = buildUserPrompt(profile, vacancy, {
+      ...settings,
+      includeTheses: false,
+    });
+
+    expect(thesesOnly).toContain("theses");
+    expect(thesesOnly).not.toContain("hidden_keys");
+    expect(keysOnly).toContain("hidden_keys");
+    expect(keysOnly).not.toContain("theses");
+  });
+
   it("adds short-letter rules for краткое письмо", () => {
     const prompt = buildUserPrompt(profile, vacancy, { ...settings, length: "short" });
 
@@ -182,5 +223,35 @@ describe("buildGenerationRequest", () => {
     expect(request.response_format).toEqual({ type: "json_object" });
     expect(request.user).toContain("Александр Иванов");
     expect(request.user).toContain("Продуктовая команда");
+  });
+
+  it("drops optional blocks from the system prompt when disabled", () => {
+    const request = buildGenerationRequest(profile, vacancy, {
+      ...settings,
+      includeTheses: false,
+      includeHiddenKeys: false,
+    });
+
+    expect(request.system).not.toContain("theses");
+    expect(request.system).not.toContain("hidden_keys");
+  });
+});
+
+describe("buildProfileCompressUserPrompt", () => {
+  it("wraps resume text in untrusted tags", () => {
+    const prompt = buildProfileCompressUserPrompt("Опыт разработки на TypeScript.");
+
+    expect(prompt).toContain("<untrusted_resume_raw>");
+    expect(prompt).toContain("Опыт разработки на TypeScript.");
+  });
+
+  it("truncates very long input", () => {
+    const prompt = buildProfileCompressUserPrompt("а".repeat(MAX_PROFILE_COMPRESS_INPUT_CHARS + 500));
+
+    expect(prompt.length).toBeLessThan(MAX_PROFILE_COMPRESS_INPUT_CHARS + 200);
+  });
+
+  it("uses a dedicated system prompt constant", () => {
+    expect(PROFILE_COMPRESS_SYSTEM_PROMPT).toContain("резюме");
   });
 });

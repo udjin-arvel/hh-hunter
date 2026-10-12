@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { migrateRawStorage } from "./migrations";
-import { STORAGE_KEY, loadPersistedState, savePersistedState } from "./storage";
-import { DEFAULT_PERSISTED_STATE } from "./types";
+import { migrateRawStorage } from "@/lib/migrations";
+import { STORAGE_KEY, loadPersistedState, savePersistedState } from "@/lib/storage";
+import { DEFAULT_PERSISTED_STATE } from "@/lib/types";
 
 describe("migrateRawStorage", () => {
   it("returns defaults for null", () => {

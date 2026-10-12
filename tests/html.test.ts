@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { isInformativeText, normalizeWhitespace, stripHtmlToText } from "./html";
+import { isInformativeText, normalizeWhitespace, stripHtmlToText } from "@/lib/html";
 
 describe("stripHtmlToText", () => {
   it("removes scripts, styles and tags", () => {

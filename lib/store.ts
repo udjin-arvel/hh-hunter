@@ -16,14 +16,13 @@ import {
 } from "./hh-url";
 import {
   cancelGenerationRequest,
+  compressProfileViaBackground,
   fetchVacancyById,
   generateLetterFromContext,
   getErrorMessage,
-  importPortfolioFromUrl,
 } from "./messaging";
 import { buildGenerationRequest as createGenerationRequest, resolveSelectedExamples } from "./prompts";
-import { getProfilePreviewText, truncatePreview, validatePortfolioUrl } from "./profile";
-import { ensureOriginPermission } from "./portfolio-import";
+import { getProfilePreviewText, truncatePreview } from "./profile";
 import {
   loadPersistedState,
   saveActiveTab,
@@ -47,12 +46,10 @@ import type { PersistedState } from "./types";
 interface AppState {
   isHydrated: boolean;
   isSaving: boolean;
-  isImportingPortfolio: boolean;
+  isProcessingProfile: boolean;
   activeTab: TabKey;
   saveError: string | null;
-  portfolioImportError: string | null;
-  portfolioImportSuccess: boolean;
-  profileUrlError: string | null;
+  profileProcessError: string | null;
   profilePreview: string | null;
   profile: Profile;
   settings: GenerationSettings;
@@ -60,7 +57,6 @@ interface AppState {
   vacancy: Vacancy | null;
   activeTabUrl: string | null;
   isHhVacancyTab: boolean;
-  manualVacancyUrl: string;
   isFetchingVacancy: boolean;
   vacancyError: string | null;
   generationInputError: string | null;
@@ -78,12 +74,11 @@ interface AppState {
   setActiveTab: (tab: TabKey) => Promise<void>;
   updateProfile: (patch: Partial<Profile>) => void;
   updateSettings: (patch: Partial<GenerationSettings>) => void;
-  importPortfolio: () => Promise<void>;
+  processProfile: (rawText: string) => Promise<void>;
+  saveProfileText: (text: string) => Promise<void>;
   clearProfilePreview: () => void;
-  setManualVacancyUrl: (url: string) => void;
   refreshActiveTabInfo: () => Promise<void>;
   scanActiveTab: () => Promise<void>;
-  importVacancyFromUrl: (url?: string) => Promise<void>;
   clearVacancy: () => void;
   checkGenerationReadiness: () => void;
   buildGenerationRequest: () => GenerationRequest | null;
@@ -96,7 +91,6 @@ interface AppState {
   copyLetterToClipboard: () => Promise<void>;
   copyThesesToClipboard: () => Promise<void>;
   clearGenerationResult: () => void;
-  saveProfile: () => Promise<void>;
   clearProfile: () => Promise<void>;
   saveSettings: () => Promise<void>;
   loadFromStorage: () => Promise<void>;
@@ -159,12 +153,10 @@ let copyThesesFeedbackTimer: ReturnType<typeof setTimeout> | null = null;
 export const useAppStore = create<AppState>((set, get) => ({
   isHydrated: false,
   isSaving: false,
-  isImportingPortfolio: false,
+  isProcessingProfile: false,
   activeTab: DEFAULT_PERSISTED_STATE.ui.activeTab,
   saveError: null,
-  portfolioImportError: null,
-  portfolioImportSuccess: false,
-  profileUrlError: null,
+  profileProcessError: null,
   profilePreview: null,
   profile: DEFAULT_PERSISTED_STATE.profile,
   settings: DEFAULT_PERSISTED_STATE.settings,
@@ -172,7 +164,6 @@ export const useAppStore = create<AppState>((set, get) => ({
   vacancy: null,
   activeTabUrl: null,
   isHhVacancyTab: false,
-  manualVacancyUrl: "",
   isFetchingVacancy: false,
   vacancyError: null,
   generationInputError: null,
@@ -197,9 +188,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       settings,
       examples: data.examples,
       saveError: null,
-      portfolioImportError: null,
-      portfolioImportSuccess: false,
-      profileUrlError: null,
+      profileProcessError: null,
       profilePreview: buildProfilePreview(data.profile),
       generationInputError: resolveGenerationInputError(data.profile, null, settings),
     });
@@ -218,15 +207,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   updateProfile: (patch) => {
     set((state) => {
       const profile = { ...state.profile, ...patch };
-      const profileUrlError =
-        patch.portfolioLink !== undefined
-          ? validatePortfolioUrl(patch.portfolioLink)
-          : state.profileUrlError;
 
       return {
         profile,
-        profileUrlError,
-        portfolioImportSuccess: false,
         generationInputError: resolveGenerationInputError(profile, state.vacancy, state.settings),
       };
     });
@@ -252,65 +235,51 @@ export const useAppStore = create<AppState>((set, get) => ({
     })();
   },
 
-  importPortfolio: async () => {
-    const url = get().profile.portfolioLink.trim();
-    const profileUrlError = validatePortfolioUrl(url);
-
-    if (!url) {
-      set({ profileUrlError: "Укажите ссылку на резюме" });
-      return;
-    }
-
-    if (profileUrlError) {
-      set({ profileUrlError });
-      return;
-    }
-
-    try {
-      await ensureOriginPermission(url);
-    } catch (error) {
-      set({
-        portfolioImportError: getErrorMessage(error),
-        portfolioImportSuccess: false,
-      });
-      return;
-    }
-
+  processProfile: async (rawText) => {
     set({
-      isImportingPortfolio: true,
-      portfolioImportError: null,
-      portfolioImportSuccess: false,
-      profileUrlError: null,
+      isProcessingProfile: true,
+      profileProcessError: null,
+      saveError: null,
     });
 
     try {
-      const text = await importPortfolioFromUrl(url);
-      set((state) => ({
-        profile: { ...state.profile, portfolioText: text },
-        portfolioImportError: null,
-        portfolioImportSuccess: true,
-        generationInputError: resolveGenerationInputError(
-          { ...state.profile, portfolioText: text },
-          state.vacancy,
-          state.settings,
-        ),
-      }));
-    } catch (error) {
+      const compressed = await compressProfileViaBackground(rawText);
+      const profile = { ...get().profile, portfolioText: compressed };
+
+      await persistProfile(profile);
       set({
-        portfolioImportError: getErrorMessage(error),
-        portfolioImportSuccess: false,
+        profile,
+        profilePreview: buildProfilePreview(profile),
+        profileProcessError: null,
+        generationInputError: resolveGenerationInputError(profile, get().vacancy, get().settings),
       });
+    } catch (error) {
+      set({ profileProcessError: getErrorMessage(error) });
     } finally {
-      set({ isImportingPortfolio: false });
+      set({ isProcessingProfile: false });
+    }
+  },
+
+  saveProfileText: async (text) => {
+    const profile = { ...get().profile, portfolioText: text };
+
+    try {
+      set({ isSaving: true, saveError: null });
+      await persistProfile(profile);
+      set({
+        profile,
+        profilePreview: buildProfilePreview(profile),
+        generationInputError: resolveGenerationInputError(profile, get().vacancy, get().settings),
+      });
+    } catch (error) {
+      set({ saveError: toAppError(error).message });
+    } finally {
+      set({ isSaving: false });
     }
   },
 
   clearProfilePreview: () => {
     set({ profilePreview: null });
-  },
-
-  setManualVacancyUrl: (url) => {
-    set({ manualVacancyUrl: url, vacancyError: null });
   },
 
   refreshActiveTabInfo: async () => {
@@ -372,34 +341,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       const vacancy = await fetchVacancyById(vacancyId, sourceUrl, tab.id);
       set({
         vacancy,
-        manualVacancyUrl: sourceUrl ?? get().manualVacancyUrl,
-        generationInputError: resolveGenerationInputError(get().profile, vacancy, get().settings),
-      });
-    } catch (error) {
-      set({ vacancyError: getErrorMessage(error) });
-    } finally {
-      set({ isFetchingVacancy: false });
-    }
-  },
-
-  importVacancyFromUrl: async (url) => {
-    const input = (url ?? get().manualVacancyUrl).trim();
-    const vacancyId = parseHhVacancyId(input);
-
-    if (!vacancyId) {
-      set({ vacancyError: "Вакансия не найдена или недоступна" });
-      return;
-    }
-
-    const sourceUrl = normalizeHhVacancyUrl(input) ?? undefined;
-
-    set({ isFetchingVacancy: true, vacancyError: null });
-
-    try {
-      const vacancy = await fetchVacancyById(vacancyId, sourceUrl);
-      set({
-        vacancy,
-        manualVacancyUrl: sourceUrl ?? input,
         generationInputError: resolveGenerationInputError(get().profile, vacancy, get().settings),
       });
     } catch (error) {
@@ -622,30 +563,6 @@ export const useAppStore = create<AppState>((set, get) => ({
     });
   },
 
-  saveProfile: async () => {
-    const { profile } = get();
-    const profileUrlError = validatePortfolioUrl(profile.portfolioLink);
-
-    if (profileUrlError) {
-      set({ profileUrlError, saveError: null });
-      return;
-    }
-
-    try {
-      set({ isSaving: true, saveError: null, profileUrlError: null });
-      await persistProfile(profile);
-      set({
-        profilePreview: buildProfilePreview(profile),
-        generationInputError: resolveGenerationInputError(profile, get().vacancy, get().settings),
-      });
-    } catch (error) {
-      set({ saveError: toAppError(error).message });
-      throw error;
-    } finally {
-      set({ isSaving: false });
-    }
-  },
-
   clearProfile: async () => {
     const profile = DEFAULT_PERSISTED_STATE.profile;
 
@@ -655,9 +572,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       set({
         profile,
         profilePreview: null,
-        profileUrlError: null,
-        portfolioImportError: null,
-        portfolioImportSuccess: false,
+        profileProcessError: null,
         generationInputError: resolveGenerationInputError(profile, get().vacancy, get().settings),
       });
     } catch (error) {

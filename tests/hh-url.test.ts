@@ -5,7 +5,7 @@ import {
   normalizeHhVacancyUrl,
   parseHhVacancyId,
   getVacancyReplyUrl,
-} from "./hh-url";
+} from "@/lib/hh-url";
 
 describe("parseHhVacancyId", () => {
   it("parses standard hh.ru vacancy urls", () => {

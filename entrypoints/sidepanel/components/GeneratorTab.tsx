@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { sortExamplesForPicker, useAppStore } from "@/lib/store";
 import type { FantasyLevel, LetterLength } from "@/lib/types";
@@ -35,7 +35,6 @@ export function GeneratorTab() {
   const vacancy = useAppStore((state) => state.vacancy);
   const activeTabUrl = useAppStore((state) => state.activeTabUrl);
   const isHhVacancyTab = useAppStore((state) => state.isHhVacancyTab);
-  const manualVacancyUrl = useAppStore((state) => state.manualVacancyUrl);
   const isFetchingVacancy = useAppStore((state) => state.isFetchingVacancy);
   const vacancyError = useAppStore((state) => state.vacancyError);
   const generationInputError = useAppStore((state) => state.generationInputError);
@@ -48,17 +47,46 @@ export function GeneratorTab() {
   const refreshActiveTabInfo = useAppStore((state) => state.refreshActiveTabInfo);
   const checkGenerationReadiness = useAppStore((state) => state.checkGenerationReadiness);
   const scanActiveTab = useAppStore((state) => state.scanActiveTab);
-  const importVacancyFromUrl = useAppStore((state) => state.importVacancyFromUrl);
-  const setManualVacancyUrl = useAppStore((state) => state.setManualVacancyUrl);
   const generateLetter = useAppStore((state) => state.generateLetter);
   const cancelGeneration = useAppStore((state) => state.cancelGeneration);
 
   const canGenerate = !generationInputError && !isGenerating;
   const pickerExamples = sortExamplesForPicker(examples);
+  const [isRefreshingActiveTab, setIsRefreshingActiveTab] = useState(false);
+
+  const handleRefreshActiveTab = useCallback(async () => {
+    setIsRefreshingActiveTab(true);
+    try {
+      await refreshActiveTabInfo();
+    } finally {
+      setIsRefreshingActiveTab(false);
+    }
+  }, [refreshActiveTabInfo]);
 
   useEffect(() => {
     void refreshActiveTabInfo();
     checkGenerationReadiness();
+
+    const onBrowserTabChange = () => {
+      void refreshActiveTabInfo();
+    };
+
+    const onBrowserTabUpdated = (
+      _tabId: number,
+      changeInfo: { url?: string },
+    ) => {
+      if (changeInfo.url !== undefined) {
+        onBrowserTabChange();
+      }
+    };
+
+    browser.tabs.onActivated.addListener(onBrowserTabChange);
+    browser.tabs.onUpdated.addListener(onBrowserTabUpdated);
+
+    return () => {
+      browser.tabs.onActivated.removeListener(onBrowserTabChange);
+      browser.tabs.onUpdated.removeListener(onBrowserTabUpdated);
+    };
   }, [refreshActiveTabInfo, checkGenerationReadiness]);
 
   return (
@@ -86,23 +114,13 @@ export function GeneratorTab() {
         >
           {isFetchingVacancy ? "Загрузка…" : "Сканировать вакансию"}
         </button>
-      </div>
-
-      <div className="rounded-2xl border border-border bg-surface/60 p-3">
-        <div className="mb-1 text-[11px] text-muted-foreground">Ссылка на вакансию</div>
-        <input
-          value={manualVacancyUrl}
-          onChange={(event) => setManualVacancyUrl(event.target.value)}
-          placeholder="https://hh.ru/vacancy/…"
-          className="w-full rounded-xl border border-border bg-background px-3 py-2 text-[12px] outline-none placeholder:text-muted-foreground focus:border-foreground"
-        />
         <button
           type="button"
-          disabled={!manualVacancyUrl.trim() || isFetchingVacancy}
-          onClick={() => void importVacancyFromUrl()}
-          className="mt-2 w-full rounded-xl border border-border py-2 text-[12px] disabled:opacity-60"
+          disabled={isRefreshingActiveTab || isFetchingVacancy}
+          onClick={() => void handleRefreshActiveTab()}
+          className="mt-2 w-full rounded-xl border border-border py-2 text-[12px] text-muted-foreground disabled:opacity-60"
         >
-          Загрузить
+          {isRefreshingActiveTab ? "Обновление…" : "Обновить активную вкладку"}
         </button>
       </div>
 
@@ -179,8 +197,27 @@ export function GeneratorTab() {
           />
         </div>
         <p className="text-[10px] text-muted-foreground">
-          Письмо: кратко ~50 слов · средне ~100 · подробно ~180. Тезисы: 4–8 пунктов.
+          Письмо: кратко ~50 слов · средне ~100 · подробно ~180.
+          {settings.includeTheses ? " Тезисы: 4–8 пунктов." : ""}
         </p>
+        <div className="space-y-1">
+          <label className="flex cursor-pointer items-center gap-2 rounded-lg px-1 py-1 text-[12px] hover:bg-surface/80">
+            <input
+              type="checkbox"
+              checked={settings.includeTheses}
+              onChange={(event) => updateSettings({ includeTheses: event.target.checked })}
+            />
+            <span>Тезисы</span>
+          </label>
+          <label className="flex cursor-pointer items-center gap-2 rounded-lg px-1 py-1 text-[12px] hover:bg-surface/80">
+            <input
+              type="checkbox"
+              checked={settings.includeHiddenKeys}
+              onChange={(event) => updateSettings({ includeHiddenKeys: event.target.checked })}
+            />
+            <span>Скрытые ключи вакансии</span>
+          </label>
+        </div>
       </div>
 
       {generationInputError && <p className="text-[11px] text-amber-700">{generationInputError}</p>}

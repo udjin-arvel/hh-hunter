@@ -1,12 +1,14 @@
-import { generateLetter } from "../lib/api/deepseek";
+import { compressProfileText, generateLetter } from "../lib/api/deepseek";
 import { getDeepSeekApiKey } from "../lib/deepseek-config";
 import { fetchHhVacancy, fetchHhVacancyFromWebsite, fetchHhVacancyViaTab } from "../lib/api/hh";
 import { toAppError } from "../lib/errors";
-import { fetchPortfolioPage } from "../lib/portfolio-import";
 import { buildGenerationRequest } from "../lib/prompts";
 import {
   backgroundPingMessageSchema,
   backgroundPongResponseSchema,
+  compressProfileErrorSchema,
+  compressProfileMessageSchema,
+  compressProfileSuccessSchema,
   fetchVacancyErrorSchema,
   fetchVacancyMessageSchema,
   fetchVacancySuccessSchema,
@@ -15,9 +17,6 @@ import {
   generateLetterSuccessSchema,
   cancelGenerateLetterMessageSchema,
   cancelGenerateLetterResponseSchema,
-  importPortfolioErrorSchema,
-  importPortfolioMessageSchema,
-  importPortfolioSuccessSchema,
 } from "../lib/schemas";
 
 let activeGenerationAbort: AbortController | null = null;
@@ -38,15 +37,18 @@ export default defineBackground(() => {
       return true;
     }
 
-    const importMessage = importPortfolioMessageSchema.safeParse(message);
+    const compressProfileMessage = compressProfileMessageSchema.safeParse(message);
 
-    if (importMessage.success) {
+    if (compressProfileMessage.success) {
       void (async () => {
         try {
-          const text = await fetchPortfolioPage(importMessage.data.url);
+          const text = await compressProfileText(
+            getDeepSeekApiKey(),
+            compressProfileMessage.data.rawText,
+          );
           sendResponse(
-            importPortfolioSuccessSchema.parse({
-              type: "import_portfolio_result",
+            compressProfileSuccessSchema.parse({
+              type: "compress_profile_result",
               ok: true,
               text,
             }),
@@ -54,8 +56,8 @@ export default defineBackground(() => {
         } catch (error) {
           const appError = toAppError(error);
           sendResponse(
-            importPortfolioErrorSchema.parse({
-              type: "import_portfolio_result",
+            compressProfileErrorSchema.parse({
+              type: "compress_profile_result",
               ok: false,
               error: appError,
             }),
@@ -123,6 +125,8 @@ export default defineBackground(() => {
           const request = buildGenerationRequest(profile, vacancy, settings, examples);
           const result = await generateLetter(getDeepSeekApiKey(), request, settings.length, {
             signal: abortController.signal,
+            includeTheses: settings.includeTheses,
+            includeHiddenKeys: settings.includeHiddenKeys,
           });
           sendResponse(
             generateLetterSuccessSchema.parse({

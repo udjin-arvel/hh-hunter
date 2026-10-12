@@ -8,8 +8,8 @@ import {
   parseGenerationResult,
   validateGenerationInput,
   validateGenerationResult,
-} from "./generation";
-import type { GenerationSettings, Profile, Vacancy } from "./types";
+} from "@/lib/generation";
+import type { GenerationSettings, Profile, Vacancy } from "@/lib/types";
 
 const profile: Profile = {
   name: "Александр",
@@ -33,6 +33,8 @@ const settings: GenerationSettings = {
   focus: "",
   fantasy: "medium",
   exampleIds: [],
+  includeTheses: true,
+  includeHiddenKeys: true,
 };
 
 function buildLetter(wordCount: number): string {
@@ -130,7 +132,43 @@ describe("validateGenerationResult", () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error.message).toContain("формату");
+      expect(result.error.message).toContain("Количество тезисов");
+    }
+  });
+
+  it("accepts a letter without optional blocks when they are disabled", () => {
+    const result = validateGenerationResult(
+      {
+        unique_intersection: "Достаточно длинная точка пересечения для валидации.",
+        letter: buildLetter(100),
+        hidden_keys: ["лишний"],
+        theses: ["Лишний тезис."],
+      },
+      "medium",
+      { includeTheses: false, includeHiddenKeys: false },
+    );
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.result.theses).toEqual([]);
+      expect(result.result.hidden_keys).toEqual([]);
+    }
+  });
+
+  it("still requires theses when that option is enabled", () => {
+    const result = validateGenerationResult(
+      {
+        hidden_keys: ["ключ1", "ключ2", "ключ3"],
+        unique_intersection: "Достаточно длинная точка пересечения для валидации.",
+        letter: buildLetter(100),
+      },
+      "medium",
+      { includeTheses: true, includeHiddenKeys: true },
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.message).toContain("Количество тезисов");
     }
   });
 

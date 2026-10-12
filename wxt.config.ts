@@ -19,6 +19,5 @@ export default defineConfig({
       "https://hh.ru/*",
       "https://*.hh.ru/*",
     ],
-    optional_host_permissions: ["https://*/*", "http://*/*"],
   },
 });

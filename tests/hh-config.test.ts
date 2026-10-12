@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { getHhApiHeaders, getHhApiUserAgent, getHhBrowserHeaders } from "./hh-config";
+import { getHhApiHeaders, getHhApiUserAgent, getHhBrowserHeaders } from "@/lib/hh-config";
 
 describe("getHhApiUserAgent", () => {
   afterEach(() => {

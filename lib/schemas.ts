@@ -50,13 +50,15 @@ export const generationSettingsSchema = z.object({
   focus: z.string().default(""),
   fantasy: fantasyLevelSchema.default("medium"),
   exampleIds: z.array(z.string()).default([]),
+  includeTheses: z.boolean().default(true),
+  includeHiddenKeys: z.boolean().default(true),
 });
 
 export const generationResultSchema = z.object({
-  hidden_keys: z.array(z.string().min(1)).min(3).max(10),
+  hidden_keys: z.array(z.string().min(1)).default([]),
   unique_intersection: z.string().min(20),
   letter: z.string().min(1),
-  theses: z.array(z.string().min(1)).min(4).max(8),
+  theses: z.array(z.string().min(1)).default([]),
 });
 
 export const generationRequestSchema = z.object({
@@ -78,26 +80,26 @@ export const backgroundPongResponseSchema = z.object({
   ok: z.literal(true),
 });
 
-export const importPortfolioMessageSchema = z.object({
-  type: z.literal("import_portfolio"),
-  url: z.string().url(),
+export const compressProfileMessageSchema = z.object({
+  type: z.literal("compress_profile"),
+  rawText: z.string().min(1),
 });
 
-export const importPortfolioSuccessSchema = z.object({
-  type: z.literal("import_portfolio_result"),
+export const compressProfileSuccessSchema = z.object({
+  type: z.literal("compress_profile_result"),
   ok: z.literal(true),
-  text: z.string(),
+  text: z.string().min(1),
 });
 
-export const importPortfolioErrorSchema = z.object({
-  type: z.literal("import_portfolio_result"),
+export const compressProfileErrorSchema = z.object({
+  type: z.literal("compress_profile_result"),
   ok: z.literal(false),
   error: appErrorSchema,
 });
 
-export const importPortfolioResponseSchema = z.discriminatedUnion("ok", [
-  importPortfolioSuccessSchema,
-  importPortfolioErrorSchema,
+export const compressProfileResponseSchema = z.discriminatedUnion("ok", [
+  compressProfileSuccessSchema,
+  compressProfileErrorSchema,
 ]);
 
 export const fetchVacancyMessageSchema = z.object({

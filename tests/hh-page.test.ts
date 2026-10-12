@@ -4,7 +4,7 @@
 import fs from "node:fs";
 import { describe, expect, it } from "vitest";
 
-import { parseVacancyFromHtml } from "./hh-page";
+import { parseVacancyFromHtml } from "@/lib/hh-page";
 
 const sampleHtml = `<!DOCTYPE html>
 <html>

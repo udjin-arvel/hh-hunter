@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { migrateRawStorage } from "./migrations";
-import { DEFAULT_PERSISTED_STATE } from "./types";
+import { migrateRawStorage } from "@/lib/migrations";
+import { DEFAULT_PERSISTED_STATE } from "@/lib/types";
 
 describe("migrateRawStorage edge cases", () => {
   it("returns defaults for non-object payload", () => {
@@ -71,6 +71,36 @@ describe("migrateRawStorage edge cases", () => {
     expect(result.profile.name).toBe("");
     expect(result.ui.activeTab).toBe("generator");
     expect("apiKey" in result).toBe(false);
+  });
+
+  it("defaults output flags for legacy settings and keeps explicit ones", () => {
+    const legacy = migrateRawStorage({
+      version: 2,
+      profile: { name: "Test" },
+      settings: { length: "short", focus: "" },
+      ui: { activeTab: "generator" },
+    });
+
+    expect(legacy.settings.includeTheses).toBe(true);
+    expect(legacy.settings.includeHiddenKeys).toBe(true);
+
+    const current = migrateRawStorage({
+      version: 3,
+      profile: { name: "Test", portfolioLink: "", portfolioText: "" },
+      settings: {
+        length: "medium",
+        focus: "",
+        fantasy: "medium",
+        exampleIds: [],
+        includeTheses: false,
+        includeHiddenKeys: false,
+      },
+      examples: [],
+      ui: { activeTab: "generator" },
+    });
+
+    expect(current.settings.includeTheses).toBe(false);
+    expect(current.settings.includeHiddenKeys).toBe(false);
   });
 
   it("does not preserve apiKey from legacy v0", () => {

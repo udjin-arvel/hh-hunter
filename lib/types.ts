@@ -66,6 +66,9 @@ export const LETTER_WORD_TOLERANCE = 0.4;
 export const THESES_COUNT_MIN = 4;
 export const THESES_COUNT_MAX = 8;
 
+export const HIDDEN_KEYS_COUNT_MIN = 3;
+export const HIDDEN_KEYS_COUNT_MAX = 10;
+
 export function getLetterWordRange(length: LetterLength): { min: number; max: number } {
   const target = LETTER_WORD_TARGETS[length];
   const tolerance = Math.floor(target * LETTER_WORD_TOLERANCE);

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
+  compressProfileText,
   DEEPSEEK_API_URL,
   DEEPSEEK_MODELS_URL,
   GENERATION_CANCELLED_MESSAGE,
@@ -8,8 +9,8 @@ import {
   mapDeepSeekFetchError,
   mapDeepSeekHttpStatusToError,
   verifyDeepSeekApiKey,
-} from "./deepseek";
-import type { GenerationRequest } from "../types";
+} from "@/lib/api/deepseek";
+import type { GenerationRequest } from "@/lib/types";
 
 const request: GenerationRequest = {
   system: "system prompt",
@@ -185,5 +186,47 @@ describe("generateLetter", () => {
     ).rejects.toMatchObject({
       message: GENERATION_CANCELLED_MESSAGE,
     });
+  });
+});
+
+describe("compressProfileText", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("returns trimmed plain text from DeepSeek", async () => {
+    const compressed = "а".repeat(120);
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          choices: [{ message: { content: `  ${compressed}  ` } }],
+        }),
+      }),
+    );
+
+    const result = await compressProfileText("sk-test", "б".repeat(150));
+
+    expect(result).toBe(compressed);
+    expect(fetch).toHaveBeenCalledWith(
+      DEEPSEEK_API_URL,
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining('"temperature":0.4'),
+      }),
+    );
+  });
+
+  it("rejects short input before calling API", async () => {
+    vi.stubGlobal("fetch", vi.fn());
+
+    await expect(compressProfileText("sk-test", "коротко")).rejects.toMatchObject({
+      code: "VALIDATION",
+    });
+
+    expect(fetch).not.toHaveBeenCalled();
   });
 });

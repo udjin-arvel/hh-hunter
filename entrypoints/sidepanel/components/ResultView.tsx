@@ -12,6 +12,8 @@ interface ResultViewProps {
 }
 
 export function ResultView({ result }: ResultViewProps) {
+  const includeTheses = useAppStore((state) => state.settings.includeTheses);
+  const includeHiddenKeys = useAppStore((state) => state.settings.includeHiddenKeys);
   const letterDraft = useAppStore((state) => state.letterDraft);
   const thesesDraft = useAppStore((state) => state.thesesDraft);
   const isGenerating = useAppStore((state) => state.isGenerating);
@@ -62,40 +64,44 @@ export function ResultView({ result }: ResultViewProps) {
         </button>
       </div>
 
-      <div className="rounded-2xl border border-border p-3">
-        <div className="mb-1.5 flex items-center justify-between text-[10px] uppercase tracking-wider text-muted-foreground">
-          <span>Тезисы</span>
-          <span>{thesesCounter}</span>
+      {includeTheses && result.theses.length > 0 && (
+        <div className="rounded-2xl border border-border p-3">
+          <div className="mb-1.5 flex items-center justify-between text-[10px] uppercase tracking-wider text-muted-foreground">
+            <span>Тезисы</span>
+            <span>{thesesCounter}</span>
+          </div>
+          <textarea
+            value={displayTheses}
+            onChange={(event) => updateThesesDraft(event.target.value)}
+            rows={6}
+            className="w-full resize-y rounded-xl border border-border bg-background px-3 py-2 text-[12px] leading-relaxed text-foreground/90 outline-none focus:border-foreground"
+          />
+          <button
+            type="button"
+            onClick={() => void copyThesesToClipboard()}
+            className="mt-2 w-full rounded-xl border border-border py-2 text-[12px]"
+          >
+            {copyThesesFeedback === "success"
+              ? "Тезисы скопированы"
+              : copyThesesFeedback === "error"
+                ? "Ошибка копирования"
+                : "Скопировать тезисы"}
+          </button>
         </div>
-        <textarea
-          value={displayTheses}
-          onChange={(event) => updateThesesDraft(event.target.value)}
-          rows={6}
-          className="w-full resize-y rounded-xl border border-border bg-background px-3 py-2 text-[12px] leading-relaxed text-foreground/90 outline-none focus:border-foreground"
-        />
-        <button
-          type="button"
-          onClick={() => void copyThesesToClipboard()}
-          className="mt-2 w-full rounded-xl border border-border py-2 text-[12px]"
-        >
-          {copyThesesFeedback === "success"
-            ? "Тезисы скопированы"
-            : copyThesesFeedback === "error"
-              ? "Ошибка копирования"
-              : "Скопировать тезисы"}
-        </button>
-      </div>
+      )}
 
-      <details className="rounded-2xl border border-border p-3 text-[12px]">
-        <summary className="cursor-pointer text-[11px] text-muted-foreground">
-          Скрытые ключи вакансии ({result.hidden_keys.length})
-        </summary>
-        <ul className="mt-2 space-y-1 text-muted-foreground">
-          {result.hidden_keys.map((key) => (
-            <li key={key}>· {key}</li>
-          ))}
-        </ul>
-      </details>
+      {includeHiddenKeys && result.hidden_keys.length > 0 && (
+        <details className="rounded-2xl border border-border p-3 text-[12px]">
+          <summary className="cursor-pointer text-[11px] text-muted-foreground">
+            Скрытые ключи вакансии ({result.hidden_keys.length})
+          </summary>
+          <ul className="mt-2 space-y-1 text-muted-foreground">
+            {result.hidden_keys.map((key) => (
+              <li key={key}>· {key}</li>
+            ))}
+          </ul>
+        </details>
+      )}
 
       <div className="flex gap-2">
         <button

@@ -1,30 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { getProfilePreviewText, truncatePreview, validatePortfolioUrl } from "./profile";
-import type { Profile } from "./types";
+import { getProfilePreviewText, truncatePreview } from "@/lib/profile";
+import type { Profile } from "@/lib/types";
 
 const baseProfile: Profile = {
   name: "Test",
   portfolioLink: "",
   portfolioText: "",
 };
-
-describe("validatePortfolioUrl", () => {
-  it("allows empty value", () => {
-    expect(validatePortfolioUrl("")).toBeNull();
-    expect(validatePortfolioUrl("   ")).toBeNull();
-  });
-
-  it("accepts http and https urls", () => {
-    expect(validatePortfolioUrl("https://github.com/user")).toBeNull();
-    expect(validatePortfolioUrl("http://example.com")).toBeNull();
-  });
-
-  it("rejects invalid urls", () => {
-    expect(validatePortfolioUrl("not-a-url")).not.toBeNull();
-    expect(validatePortfolioUrl("ftp://example.com")).not.toBeNull();
-  });
-});
 
 describe("getProfilePreviewText", () => {
   it("returns portfolio text", () => {

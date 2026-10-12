@@ -6,8 +6,8 @@ import {
   fetchVacancyResponseSchema,
   generateLetterMessageSchema,
   generateLetterResponseSchema,
-  importPortfolioMessageSchema,
-  importPortfolioResponseSchema,
+  compressProfileMessageSchema,
+  compressProfileResponseSchema,
 } from "./schemas";
 import type {
   AppError,
@@ -18,14 +18,14 @@ import type {
   Vacancy,
 } from "./types";
 
-export async function importPortfolioFromUrl(url: string): Promise<string> {
-  const message = importPortfolioMessageSchema.parse({
-    type: "import_portfolio",
-    url,
+export async function compressProfileViaBackground(rawText: string): Promise<string> {
+  const message = compressProfileMessageSchema.parse({
+    type: "compress_profile",
+    rawText,
   });
 
   const response = await browser.runtime.sendMessage(message);
-  const parsed = importPortfolioResponseSchema.safeParse(response);
+  const parsed = compressProfileResponseSchema.safeParse(response);
 
   if (!parsed.success) {
     throw toAppError(new Error("Некорректный ответ service worker"));

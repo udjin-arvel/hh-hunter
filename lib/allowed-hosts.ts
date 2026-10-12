@@ -8,17 +8,6 @@ export const REQUIRED_HOST_PERMISSIONS = [
   "https://*.hh.ru/*",
 ] as const;
 
-export const OPTIONAL_HOST_PERMISSIONS = ["https://*/*", "http://*/*"] as const;
-
 export function isAllowedRequiredFetchUrl(url: string): boolean {
   return HH_API_HOST_PATTERN.test(url) || DEEPSEEK_API_HOST_PATTERN.test(url);
-}
-
-export function isHttpOrHttpsUrl(url: string): boolean {
-  try {
-    const protocol = new URL(url).protocol;
-    return protocol === "http:" || protocol === "https:";
-  } catch {
-    return false;
-  }
 }

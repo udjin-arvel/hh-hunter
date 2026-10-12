@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { getDeepSeekApiKey } from "./deepseek-config";
+import { getDeepSeekApiKey } from "@/lib/deepseek-config";
 
 describe("getDeepSeekApiKey", () => {
   afterEach(() => {
