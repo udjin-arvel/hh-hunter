@@ -28,6 +28,7 @@ function buildValidContent() {
     hidden_keys: ["ключ1", "ключ2", "ключ3"],
     unique_intersection: "Точка пересечения между опытом и вакансией достаточно длинная.",
     letter: buildLetter(100),
+    theses: ["Тезис один.", "Тезис два.", "Тезис три.", "Тезис четыре."],
   });
 }
 
@@ -178,7 +179,7 @@ describe("generateLetter", () => {
     );
 
     await expect(
-      generateLetter("sk-test", request, "medium", "letter", {
+      generateLetter("sk-test", request, "medium", {
         signal: abortController.signal,
       }),
     ).rejects.toMatchObject({

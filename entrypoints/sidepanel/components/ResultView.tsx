@@ -1,4 +1,9 @@
-import { countThesesLines, countWords, getDisplayLetter } from "@/lib/generation";
+import {
+  countThesesLines,
+  countWords,
+  formatThesesForDisplay,
+  getDisplayLetter,
+} from "@/lib/generation";
 import { useAppStore } from "@/lib/store";
 import type { GenerationResult } from "@/lib/types";
 
@@ -8,19 +13,21 @@ interface ResultViewProps {
 
 export function ResultView({ result }: ResultViewProps) {
   const letterDraft = useAppStore((state) => state.letterDraft);
+  const thesesDraft = useAppStore((state) => state.thesesDraft);
   const isGenerating = useAppStore((state) => state.isGenerating);
   const copyFeedback = useAppStore((state) => state.copyFeedback);
-  const settings = useAppStore((state) => state.settings);
+  const copyThesesFeedback = useAppStore((state) => state.copyThesesFeedback);
   const updateLetterDraft = useAppStore((state) => state.updateLetterDraft);
+  const updateThesesDraft = useAppStore((state) => state.updateThesesDraft);
   const copyLetterToClipboard = useAppStore((state) => state.copyLetterToClipboard);
+  const copyThesesToClipboard = useAppStore((state) => state.copyThesesToClipboard);
   const regenerateLetter = useAppStore((state) => state.regenerateLetter);
   const openVacancyReply = useAppStore((state) => state.openVacancyReply);
 
   const displayLetter = getDisplayLetter(letterDraft, result.letter);
-  const isTheses = settings.format === "theses";
-  const counterLabel = isTheses
-    ? `${countThesesLines(displayLetter)} пунктов`
-    : `${countWords(displayLetter)} слов`;
+  const displayTheses = thesesDraft ?? formatThesesForDisplay(result.theses);
+  const letterCounter = `${countWords(displayLetter)} слов`;
+  const thesesCounter = `${countThesesLines(displayTheses)} пунктов`;
 
   return (
     <div className="space-y-3 pt-1">
@@ -33,8 +40,8 @@ export function ResultView({ result }: ResultViewProps) {
 
       <div className="rounded-2xl border border-border p-3">
         <div className="mb-1.5 flex items-center justify-between text-[10px] uppercase tracking-wider text-muted-foreground">
-          <span>{isTheses ? "Тезисы" : "Готовое письмо"}</span>
-          <span>{counterLabel}</span>
+          <span>Готовое письмо</span>
+          <span>{letterCounter}</span>
         </div>
         <textarea
           value={displayLetter}
@@ -42,6 +49,41 @@ export function ResultView({ result }: ResultViewProps) {
           rows={8}
           className="w-full resize-y rounded-xl border border-border bg-background px-3 py-2 text-[12px] leading-relaxed text-foreground/90 outline-none focus:border-foreground"
         />
+        <button
+          type="button"
+          onClick={() => void copyLetterToClipboard()}
+          className="mt-2 w-full rounded-xl border border-border py-2 text-[12px]"
+        >
+          {copyFeedback === "success"
+            ? "Письмо скопировано"
+            : copyFeedback === "error"
+              ? "Ошибка копирования"
+              : "Скопировать письмо"}
+        </button>
+      </div>
+
+      <div className="rounded-2xl border border-border p-3">
+        <div className="mb-1.5 flex items-center justify-between text-[10px] uppercase tracking-wider text-muted-foreground">
+          <span>Тезисы</span>
+          <span>{thesesCounter}</span>
+        </div>
+        <textarea
+          value={displayTheses}
+          onChange={(event) => updateThesesDraft(event.target.value)}
+          rows={6}
+          className="w-full resize-y rounded-xl border border-border bg-background px-3 py-2 text-[12px] leading-relaxed text-foreground/90 outline-none focus:border-foreground"
+        />
+        <button
+          type="button"
+          onClick={() => void copyThesesToClipboard()}
+          className="mt-2 w-full rounded-xl border border-border py-2 text-[12px]"
+        >
+          {copyThesesFeedback === "success"
+            ? "Тезисы скопированы"
+            : copyThesesFeedback === "error"
+              ? "Ошибка копирования"
+              : "Скопировать тезисы"}
+        </button>
       </div>
 
       <details className="rounded-2xl border border-border p-3 text-[12px]">
@@ -58,23 +100,11 @@ export function ResultView({ result }: ResultViewProps) {
       <div className="flex gap-2">
         <button
           type="button"
-          onClick={() => void copyLetterToClipboard()}
-          className="flex-1 rounded-xl bg-primary py-2 text-[12px] text-primary-foreground"
-        >
-          {copyFeedback === "success"
-            ? "Скопировано"
-            : copyFeedback === "error"
-              ? "Ошибка копирования"
-              : "Скопировать"}
-        </button>
-        <button
-          type="button"
           disabled={isGenerating}
           onClick={() => void regenerateLetter()}
-          className="rounded-xl border border-border px-3 py-2 text-[12px] disabled:opacity-60"
-          aria-label="Сгенерировать заново"
+          className="flex-1 rounded-xl border border-border py-2 text-[12px] disabled:opacity-60"
         >
-          ↻
+          Сгенерировать заново ↻
         </button>
         <button
           type="button"

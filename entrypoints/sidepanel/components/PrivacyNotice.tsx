@@ -6,8 +6,9 @@ export function PrivacyNotice({ variant = "short" }: PrivacyNoticeProps) {
   if (variant === "short") {
     return (
       <div className="rounded-xl bg-surface p-3 text-[11px] leading-relaxed text-muted-foreground">
-        Профиль и настройки хранятся локально в браузере. При генерации в DeepSeek отправляются имя,
-        опыт, данные вакансии и параметры письма. Запросы к HH API — только по ID вакансии.
+        Профиль, примеры и настройки хранятся локально в браузере. При генерации в DeepSeek
+        отправляются имя, резюме, данные вакансии, выбранные примеры и параметры письма. Запросы к
+        HH API — только по ID вакансии.
       </div>
     );
   }
@@ -22,15 +23,16 @@ export function PrivacyNotice({ variant = "short" }: PrivacyNoticeProps) {
         </li>
         <li>
           <span className="text-foreground">DeepSeek:</span> при нажатии «Сгенерировать» — имя,
-          опыт/портфолио, описание вакансии, навыки и настройки стиля/длины.
+          текст резюме, описание вакансии, навыки, выбранные примеры писем и настройки длины и
+          уровня фантазии.
         </li>
         <li>
           <span className="text-foreground">HH API:</span> публичный запрос{" "}
           <span className="font-mono">GET /vacancies/&#123;id&#125;</span> без авторизации.
         </li>
         <li>
-          <span className="text-foreground">Портфолио:</span> опциональный запрос к URL, указанному
-          пользователем; при блокировке — ручной ввод достижений.
+          <span className="text-foreground">Резюме:</span> опциональный запрос к URL резюме,
+          указанному пользователем.
         </li>
       </ul>
       <p>Данные не отправляются на другие серверы. Подробнее — в PRIVACY.md в репозитории.</p>

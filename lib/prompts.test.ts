@@ -3,18 +3,20 @@ import { describe, expect, it } from "vitest";
 import {
   buildGenerationRequest,
   buildUserPrompt,
+  MAX_EXAMPLE_PROMPT_CHARS,
   MAX_PORTFOLIO_PROMPT_CHARS,
   MAX_USER_FOCUS_CHARS,
+  resolveSelectedExamples,
   SYSTEM_PROMPT,
+  VACANCY_LANGUAGE_RULE,
 } from "./prompts";
-import type { GenerationSettings, Profile, Vacancy } from "./types";
+import type { GenerationSettings, LetterExample, Profile, Vacancy } from "./types";
 
 const profile: Profile = {
   name: "Александр Иванов",
   portfolioLink: "https://example.com",
   portfolioText:
     "Опыт продуктового дизайна более 5 лет. Вёл миграцию B2B-модуля на новую дизайн-систему.",
-  achievements: "",
 };
 
 const vacancy: Vacancy = {
@@ -30,10 +32,17 @@ const vacancy: Vacancy = {
 };
 
 const settings: GenerationSettings = {
-  format: "letter",
-  style: "business",
   length: "medium",
   focus: "Акцент на управлении командами",
+  fantasy: "medium",
+  exampleIds: [],
+};
+
+const example: LetterExample = {
+  id: "ex-1",
+  title: "Продуктовая команда",
+  letter: "Пример удачного письма с конкретикой и прямым тоном.",
+  favorite: true,
 };
 
 describe("buildUserPrompt", () => {
@@ -45,20 +54,21 @@ describe("buildUserPrompt", () => {
     expect(prompt).toContain("крупный бизнес");
     expect(prompt).toContain("Продуктовый дизайнер");
     expect(prompt).toContain("Figma, UX-research");
-    expect(prompt).toContain("Готовое письмо");
     expect(prompt).toContain("Деловой");
-    expect(prompt).toContain("Среднее");
     expect(prompt).toContain("примерно 100 слов");
     expect(prompt).toContain("Акцент на управлении командами");
+    expect(prompt).toContain("Уровень фантазии: средний");
+    expect(prompt).toContain("theses");
+    expect(prompt).toContain(VACANCY_LANGUAGE_RULE);
   });
 
-  it("includes theses format instructions", () => {
-    const prompt = buildUserPrompt(profile, vacancy, { ...settings, format: "theses" });
+  it("includes fantasy level instructions", () => {
+    const lowPrompt = buildUserPrompt(profile, vacancy, { ...settings, fantasy: "low" });
+    const highPrompt = buildUserPrompt(profile, vacancy, { ...settings, fantasy: "high" });
 
-    expect(prompt).toContain("Тезисы");
-    expect(prompt).toContain("6–9 тезисов");
-    expect(prompt).toContain("набор тезисов");
-    expect(prompt).not.toContain("примерно 100 слов");
+    expect(lowPrompt).toContain("низкий");
+    expect(lowPrompt).toContain("Ничего не выдумывай");
+    expect(highPrompt).toContain("высокий");
   });
 
   it("wraps untrusted content in delimiters", () => {
@@ -96,16 +106,27 @@ describe("buildUserPrompt", () => {
     expect(match?.[1]).toHaveLength(MAX_USER_FOCUS_CHARS);
   });
 
-  it("uses achievements when portfolio text is empty", () => {
-    const achievementsProfile: Profile = {
-      ...profile,
-      portfolioText: "",
-      achievements: "Ключевые достижения в продуктовом дизайне и исследованиях.",
+  it("includes selected examples", () => {
+    const prompt = buildUserPrompt(profile, vacancy, settings, [example]);
+
+    expect(prompt).toContain("<untrusted_example_1>");
+    expect(prompt).toContain("Продуктовая команда");
+    expect(prompt).toContain("не копируй дословно");
+  });
+
+  it("truncates long example text", () => {
+    const longExample: LetterExample = {
+      ...example,
+      letter: "в".repeat(MAX_EXAMPLE_PROMPT_CHARS + 100),
     };
 
-    const prompt = buildUserPrompt(achievementsProfile, vacancy, settings);
+    const prompt = buildUserPrompt(profile, vacancy, settings, [longExample]);
+    const match = prompt.match(/<untrusted_example_1>\n([\s\S]*?)\n<\/untrusted_example_1>/);
 
-    expect(prompt).toContain("Ключевые достижения в продуктовом дизайне");
+    const body = match?.[1] ?? "";
+    expect(body.length).toBeLessThanOrEqual(
+      `Заголовок: ${longExample.title}\n`.length + MAX_EXAMPLE_PROMPT_CHARS,
+    );
   });
 
   it("adds short-letter rules for краткое письмо", () => {
@@ -118,17 +139,29 @@ describe("buildUserPrompt", () => {
   });
 });
 
+describe("resolveSelectedExamples", () => {
+  it("filters examples by id", () => {
+    const all = [
+      example,
+      { ...example, id: "ex-2", title: "Другое", favorite: false },
+    ];
+
+    const selected = resolveSelectedExamples(all, ["ex-2"]);
+
+    expect(selected).toHaveLength(1);
+    expect(selected[0]?.id).toBe("ex-2");
+  });
+});
+
 describe("SYSTEM_PROMPT", () => {
-  it("requires human-like tone, first-person intersection and 3–10 hidden keys", () => {
+  it("requires letter, theses and business tone", () => {
     expect(SYSTEM_PROMPT).toContain("живой человек");
-    expect(SYSTEM_PROMPT).toContain("Меньше вежливости");
-    expect(SYSTEM_PROMPT).toContain("прямоты");
-    expect(SYSTEM_PROMPT).toContain("боль работодателя");
-    expect(SYSTEM_PROMPT).toContain("смежные");
+    expect(SYSTEM_PROMPT).toContain("деловой");
+    expect(SYSTEM_PROMPT).toContain("theses");
     expect(SYSTEM_PROMPT).toContain("hidden_keys");
-    expect(SYSTEM_PROMPT).toContain("от первого лица");
-    expect(SYSTEM_PROMPT).toContain("от 3 до 10");
-    expect(SYSTEM_PROMPT).toContain("Тезисы");
+    expect(SYSTEM_PROMPT).toContain("уровень фантазии");
+    expect(SYSTEM_PROMPT).toContain("преимущественно на английском");
+    expect(SYSTEM_PROMPT).toContain("только на русском");
   });
 });
 
@@ -141,12 +174,13 @@ describe("buildGenerationRequest", () => {
   });
 
   it("returns a valid generation request", () => {
-    const request = buildGenerationRequest(profile, vacancy, settings);
+    const request = buildGenerationRequest(profile, vacancy, settings, [example]);
 
     expect(request.system).toBe(SYSTEM_PROMPT);
     expect(request.model).toBe("deepseek-chat");
     expect(request.temperature).toBe(0.7);
     expect(request.response_format).toEqual({ type: "json_object" });
     expect(request.user).toContain("Александр Иванов");
+    expect(request.user).toContain("Продуктовая команда");
   });
 });

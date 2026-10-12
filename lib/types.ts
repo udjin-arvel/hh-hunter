@@ -6,11 +6,11 @@ import type {
   appErrorSchema,
   backgroundPingMessageSchema,
   backgroundPongResponseSchema,
+  fantasyLevelSchema,
   generationRequestSchema,
   generationResultSchema,
+  letterExampleSchema,
   letterLengthSchema,
-  letterStyleSchema,
-  responseFormatSchema,
   tabKeySchema,
   vacancySchema,
 } from "./schemas";
@@ -19,9 +19,9 @@ export type AppErrorCode = z.infer<typeof appErrorCodeSchema>;
 export type AppError = z.infer<typeof appErrorSchema>;
 export type Profile = z.infer<typeof profileSchema>;
 export type Vacancy = z.infer<typeof vacancySchema>;
-export type LetterStyle = z.infer<typeof letterStyleSchema>;
 export type LetterLength = z.infer<typeof letterLengthSchema>;
-export type ResponseFormat = z.infer<typeof responseFormatSchema>;
+export type FantasyLevel = z.infer<typeof fantasyLevelSchema>;
+export type LetterExample = z.infer<typeof letterExampleSchema>;
 export type GenerationSettings = z.infer<typeof generationSettingsSchema>;
 export type GenerationResult = z.infer<typeof generationResultSchema>;
 export type GenerationRequest = z.infer<typeof generationRequestSchema>;
@@ -36,21 +36,17 @@ export const DEFAULT_PROFILE: Profile = profileSchema.parse({});
 export const DEFAULT_GENERATION_SETTINGS: GenerationSettings = generationSettingsSchema.parse({});
 
 export const DEFAULT_PERSISTED_STATE: PersistedState = persistedStateSchema.parse({
-  version: 2,
+  version: 3,
   profile: DEFAULT_PROFILE,
   settings: DEFAULT_GENERATION_SETTINGS,
+  examples: [],
   ui: { activeTab: "generator" },
 });
 
-export const RESPONSE_FORMAT_LABELS: Record<ResponseFormat, string> = {
-  letter: "Готовое письмо",
-  theses: "Тезисы",
-};
-
-export const LETTER_STYLE_LABELS: Record<LetterStyle, string> = {
-  conversational: "Разговорный",
-  business: "Деловой",
-  metrics: "С акцентом на цифры",
+export const FANTASY_LEVEL_LABELS: Record<FantasyLevel, string> = {
+  low: "Низкий",
+  medium: "Средний",
+  high: "Высокий",
 };
 
 export const LETTER_LENGTH_LABELS: Record<LetterLength, string> = {
@@ -67,11 +63,8 @@ export const LETTER_WORD_TARGETS: Record<LetterLength, number> = {
 
 export const LETTER_WORD_TOLERANCE = 0.4;
 
-export const THESES_LINE_RANGES: Record<LetterLength, { min: number; max: number }> = {
-  short: { min: 4, max: 6 },
-  medium: { min: 6, max: 9 },
-  long: { min: 8, max: 12 },
-};
+export const THESES_COUNT_MIN = 4;
+export const THESES_COUNT_MAX = 8;
 
 export function getLetterWordRange(length: LetterLength): { min: number; max: number } {
   const target = LETTER_WORD_TARGETS[length];
@@ -81,8 +74,4 @@ export function getLetterWordRange(length: LetterLength): { min: number; max: nu
     min: target - tolerance,
     max: target + tolerance,
   };
-}
-
-export function getThesesLineRange(length: LetterLength): { min: number; max: number } {
-  return THESES_LINE_RANGES[length];
 }

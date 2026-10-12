@@ -19,7 +19,7 @@ describe("migrateRawStorage edge cases", () => {
     expect(result).toEqual(DEFAULT_PERSISTED_STATE);
   });
 
-  it("migrates v1 to v2 without apiKey", () => {
+  it("migrates v1 to v3 without apiKey", () => {
     const result = migrateRawStorage({
       version: 1,
       profile: {
@@ -37,9 +37,12 @@ describe("migrateRawStorage edge cases", () => {
       ui: { activeTab: "api" },
     });
 
-    expect(result.version).toBe(2);
+    expect(result.version).toBe(3);
     expect(result.profile.name).toBe("Test");
+    expect(result.profile.portfolioText).toBe("опыт");
     expect(result.ui.activeTab).toBe("generator");
+    expect(result.settings.fantasy).toBe("medium");
+    expect(result.examples).toEqual([]);
     expect("apiKey" in result).toBe(false);
   });
 
@@ -48,12 +51,11 @@ describe("migrateRawStorage edge cases", () => {
       profile: { name: "Legacy User" },
     });
 
-    expect(result.version).toBe(2);
+    expect(result.version).toBe(3);
     expect(result.profile.name).toBe("Legacy User");
-    expect(result.profile.achievements).toBe("");
-    expect(result.settings.style).toBe("business");
+    expect(result.profile.portfolioText).toBe("");
+    expect(result.settings.fantasy).toBe("medium");
     expect(result.settings.length).toBe("medium");
-    expect(result.settings.format).toBe("letter");
     expect(result.ui.activeTab).toBe("generator");
   });
 
@@ -65,7 +67,7 @@ describe("migrateRawStorage edge cases", () => {
       apiKey: "sk-test-key",
     });
 
-    expect(result.version).toBe(2);
+    expect(result.version).toBe(3);
     expect(result.profile.name).toBe("");
     expect(result.ui.activeTab).toBe("generator");
     expect("apiKey" in result).toBe(false);

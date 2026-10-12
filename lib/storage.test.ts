@@ -12,13 +12,32 @@ describe("migrateRawStorage", () => {
   it("migrates legacy payload without version", () => {
     const migrated = migrateRawStorage({
       profile: { name: "Test" },
-      settings: { style: "emotional" },
+      settings: { style: "emotional", format: "letter" },
     });
 
-    expect(migrated.version).toBe(2);
+    expect(migrated.version).toBe(3);
     expect(migrated.profile.name).toBe("Test");
-    expect(migrated.settings.style).toBe("conversational");
-    expect(migrated.settings.format).toBe("letter");
+    expect(migrated.settings.fantasy).toBe("medium");
+    expect(migrated.settings.exampleIds).toEqual([]);
+    expect(migrated.examples).toEqual([]);
+  });
+
+  it("migrates achievements into portfolioText", () => {
+    const migrated = migrateRawStorage({
+      version: 2,
+      profile: {
+        name: "Test",
+        portfolioLink: "",
+        portfolioText: "",
+        achievements: "старый опыт",
+      },
+      settings: { format: "theses", style: "metrics", length: "short", focus: "" },
+      ui: { activeTab: "generator" },
+    });
+
+    expect(migrated.version).toBe(3);
+    expect(migrated.profile.portfolioText).toBe("старый опыт");
+    expect(migrated.settings.length).toBe("short");
   });
 
   it("falls back for unknown version", () => {

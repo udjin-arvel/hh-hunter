@@ -7,7 +7,6 @@ const baseProfile: Profile = {
   name: "Test",
   portfolioLink: "",
   portfolioText: "",
-  achievements: "",
 };
 
 describe("validatePortfolioUrl", () => {
@@ -28,23 +27,17 @@ describe("validatePortfolioUrl", () => {
 });
 
 describe("getProfilePreviewText", () => {
-  it("prefers portfolioText over achievements", () => {
+  it("returns portfolio text", () => {
     const profile: Profile = {
       ...baseProfile,
-      portfolioText: "Imported text",
-      achievements: "Manual text",
+      portfolioText: "Imported resume text",
     };
 
-    expect(getProfilePreviewText(profile)).toBe("Imported text");
+    expect(getProfilePreviewText(profile)).toBe("Imported resume text");
   });
 
-  it("falls back to achievements", () => {
-    const profile: Profile = {
-      ...baseProfile,
-      achievements: "Manual text",
-    };
-
-    expect(getProfilePreviewText(profile)).toBe("Manual text");
+  it("returns empty string when portfolio is empty", () => {
+    expect(getProfilePreviewText(baseProfile)).toBe("");
   });
 });
 

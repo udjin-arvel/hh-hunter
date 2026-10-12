@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useAppStore } from "@/lib/store";
 import type { TabKey } from "@/lib/types";
 
+import { ExamplesTab } from "./components/ExamplesTab";
 import { GeneratorTab } from "./components/GeneratorTab";
 import { LogoMark } from "./components/LogoMark";
 import { ProfileTab } from "./components/ProfileTab";
@@ -49,6 +50,7 @@ export default function App() {
       <div className="flex-1 overflow-y-auto px-5 pb-5">
         {activeTab === "profile" && <ProfileTab />}
         {activeTab === "generator" && <GeneratorTab />}
+        {activeTab === "examples" && <ExamplesTab />}
       </div>
 
       {saveError && (

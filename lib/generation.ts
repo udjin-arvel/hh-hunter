@@ -7,15 +7,25 @@ import type {
   GenerationSettings,
   LetterLength,
   Profile,
-  ResponseFormat,
   Vacancy,
 } from "./types";
-import { getLetterWordRange } from "./types";
+import { getLetterWordRange, THESES_COUNT_MAX, THESES_COUNT_MIN } from "./types";
 
 const MIN_PROFILE_CHARS = 100;
 
 export function getDisplayLetter(letterDraft: string | null, letter: string): string {
   return letterDraft ?? letter;
+}
+
+export function formatThesesForDisplay(theses: string[]): string {
+  return theses.join("\n");
+}
+
+export function parseThesesFromDisplay(text: string): string[] {
+  return text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
 }
 
 export function countWords(text: string): number {
@@ -29,10 +39,7 @@ export function countWords(text: string): number {
 }
 
 export function countThesesLines(text: string): number {
-  return text
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean).length;
+  return parseThesesFromDisplay(text).length;
 }
 
 export function validateGenerationInput(
@@ -47,14 +54,14 @@ export function validateGenerationInput(
     };
   }
 
-  const candidateText = profile.portfolioText.trim() || profile.achievements.trim();
+  const candidateText = profile.portfolioText.trim();
 
   if (!isInformativeText(candidateText, MIN_PROFILE_CHARS)) {
     return {
       ok: false,
       error: createAppError(
         "VALIDATION",
-        "Заполните достижения или импортируйте портфолио (минимум 100 символов).",
+        "Импортируйте резюме с hh.ru (минимум 100 символов).",
       ),
     };
   }
@@ -65,7 +72,6 @@ export function validateGenerationInput(
 export function validateGenerationResult(
   value: unknown,
   expectedLength: LetterLength,
-  format: ResponseFormat = "letter",
 ): { ok: true; result: GenerationResult } | { ok: false; error: AppError } {
   const parsed = generationResultSchema.safeParse(value);
 
@@ -74,10 +80,6 @@ export function validateGenerationResult(
       ok: false,
       error: createAppError("VALIDATION", "Ответ модели не соответствует формату.", parsed.error),
     };
-  }
-
-  if (format === "theses") {
-    return { ok: true, result: parsed.data };
   }
 
   const wordCount = countWords(parsed.data.letter);
@@ -89,6 +91,18 @@ export function validateGenerationResult(
       error: createAppError(
         "VALIDATION",
         `Длина письма (${wordCount} слов) не соответствует настройке (${min}–${max} слов).`,
+      ),
+    };
+  }
+
+  const thesesCount = parsed.data.theses.length;
+
+  if (thesesCount < THESES_COUNT_MIN || thesesCount > THESES_COUNT_MAX) {
+    return {
+      ok: false,
+      error: createAppError(
+        "VALIDATION",
+        `Количество тезисов (${thesesCount}) должно быть от ${THESES_COUNT_MIN} до ${THESES_COUNT_MAX}.`,
       ),
     };
   }
@@ -132,7 +146,6 @@ function extractJsonValue(raw: string): unknown | null {
 export function parseGenerationResult(
   raw: string,
   expectedLength: LetterLength,
-  format: ResponseFormat = "letter",
 ): { ok: true; result: GenerationResult } | { ok: false; error: AppError } {
   const value = extractJsonValue(raw);
 
@@ -143,5 +156,5 @@ export function parseGenerationResult(
     };
   }
 
-  return validateGenerationResult(value, expectedLength, format);
+  return validateGenerationResult(value, expectedLength);
 }

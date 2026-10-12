@@ -9,7 +9,14 @@ import {
   importPortfolioMessageSchema,
   importPortfolioResponseSchema,
 } from "./schemas";
-import type { AppError, GenerationResult, GenerationSettings, Profile, Vacancy } from "./types";
+import type {
+  AppError,
+  GenerationResult,
+  GenerationSettings,
+  LetterExample,
+  Profile,
+  Vacancy,
+} from "./types";
 
 export async function importPortfolioFromUrl(url: string): Promise<string> {
   const message = importPortfolioMessageSchema.parse({
@@ -61,12 +68,14 @@ export async function generateLetterFromContext(
   profile: Profile,
   vacancy: Vacancy,
   settings: GenerationSettings,
+  examples: LetterExample[] = [],
 ): Promise<GenerationResult> {
   const message = generateLetterMessageSchema.parse({
     type: "generate_letter",
     profile,
     vacancy,
     settings,
+    examples,
   });
 
   const response = await browser.runtime.sendMessage(message);

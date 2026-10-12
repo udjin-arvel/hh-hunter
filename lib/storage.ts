@@ -1,7 +1,7 @@
 import { createAppError } from "./errors";
 import { migrateRawStorage } from "./migrations";
 import { persistedStateSchema } from "./schemas";
-import type { GenerationSettings, PersistedState, Profile, TabKey } from "./types";
+import type { GenerationSettings, LetterExample, PersistedState, Profile, TabKey } from "./types";
 
 export const STORAGE_KEY = "hh-hunter:v1";
 
@@ -59,5 +59,12 @@ export async function saveActiveTab(activeTab: TabKey): Promise<void> {
   await updatePersistedState((current) => ({
     ...current,
     ui: { activeTab },
+  }));
+}
+
+export async function saveExamples(examples: LetterExample[]): Promise<void> {
+  await updatePersistedState((current) => ({
+    ...current,
+    examples,
   }));
 }

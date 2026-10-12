@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { createAppError } from "../errors";
 import { parseGenerationResult } from "../generation";
-import type { GenerationRequest, GenerationResult, LetterLength, ResponseFormat } from "../types";
+import type { GenerationRequest, GenerationResult, LetterLength } from "../types";
 
 export const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
 export const DEEPSEEK_MODELS_URL = "https://api.deepseek.com/v1/models";
@@ -104,7 +104,6 @@ export async function generateLetter(
   apiKey: string,
   request: GenerationRequest,
   expectedLength: LetterLength,
-  format: ResponseFormat = "letter",
   options?: GenerateLetterOptions,
 ): Promise<GenerationResult> {
   const signal = buildFetchSignal(options);
@@ -157,7 +156,7 @@ export async function generateLetter(
   }
 
   const content = parsed.data.choices[0]?.message.content ?? "";
-  const result = parseGenerationResult(content, expectedLength, format);
+  const result = parseGenerationResult(content, expectedLength);
 
   if (!result.ok) {
     throw result.error;

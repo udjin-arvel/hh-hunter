@@ -26,8 +26,7 @@ export function validatePortfolioUrl(value: string): string | null {
 }
 
 export function getProfilePreviewText(profile: Profile): string {
-  const source = profile.portfolioText.trim() || profile.achievements.trim();
-  return source;
+  return profile.portfolioText.trim();
 }
 
 export function truncatePreview(text: string, limit = 200): string {

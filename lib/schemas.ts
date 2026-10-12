@@ -20,7 +20,6 @@ export const profileSchema = z.object({
   name: z.string().default(""),
   portfolioLink: z.string().default(""),
   portfolioText: z.string().default(""),
-  achievements: z.string().default(""),
 });
 
 export const vacancySchema = z.object({
@@ -35,23 +34,29 @@ export const vacancySchema = z.object({
   url: z.string().url().optional(),
 });
 
-export const letterStyleSchema = z.enum(["conversational", "business", "metrics"]);
-
 export const letterLengthSchema = z.enum(["short", "medium", "long"]);
 
-export const responseFormatSchema = z.enum(["letter", "theses"]);
+export const fantasyLevelSchema = z.enum(["low", "medium", "high"]);
+
+export const letterExampleSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1),
+  letter: z.string().min(1),
+  favorite: z.boolean().default(false),
+});
 
 export const generationSettingsSchema = z.object({
-  format: responseFormatSchema.default("letter"),
-  style: letterStyleSchema.default("business"),
   length: letterLengthSchema.default("medium"),
   focus: z.string().default(""),
+  fantasy: fantasyLevelSchema.default("medium"),
+  exampleIds: z.array(z.string()).default([]),
 });
 
 export const generationResultSchema = z.object({
   hidden_keys: z.array(z.string().min(1)).min(3).max(10),
   unique_intersection: z.string().min(20),
   letter: z.string().min(1),
+  theses: z.array(z.string().min(1)).min(4).max(8),
 });
 
 export const generationRequestSchema = z.object({
@@ -124,6 +129,7 @@ export const generateLetterMessageSchema = z.object({
   profile: profileSchema,
   vacancy: vacancySchema,
   settings: generationSettingsSchema,
+  examples: z.array(letterExampleSchema).default([]),
 });
 
 export const generateLetterSuccessSchema = z.object({
@@ -152,14 +158,15 @@ export const cancelGenerateLetterResponseSchema = z.object({
   ok: z.literal(true),
 });
 
-export const STORAGE_VERSION = 2;
+export const STORAGE_VERSION = 3;
 
-export const tabKeySchema = z.enum(["profile", "generator"]);
+export const tabKeySchema = z.enum(["profile", "generator", "examples"]);
 
 export const persistedStateSchema = z.object({
   version: z.literal(STORAGE_VERSION),
   profile: profileSchema,
   settings: generationSettingsSchema,
+  examples: z.array(letterExampleSchema).default([]),
   ui: z
     .object({
       activeTab: tabKeySchema.default("generator"),
