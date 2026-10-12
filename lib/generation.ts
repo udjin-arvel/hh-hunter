@@ -10,7 +10,6 @@ import type {
   Vacancy,
 } from "./types";
 import {
-  getLetterWordRange,
   HIDDEN_KEYS_COUNT_MAX,
   HIDDEN_KEYS_COUNT_MIN,
   THESES_COUNT_MAX,
@@ -109,7 +108,7 @@ function applyOutputOptions(value: unknown, output: GenerationOutputOptions): un
 
 export function validateGenerationResult(
   value: unknown,
-  expectedLength: LetterLength,
+  _expectedLength: LetterLength,
   output: GenerationOutputOptions = DEFAULT_GENERATION_OUTPUT,
 ): { ok: true; result: GenerationResult } | { ok: false; error: AppError } {
   const parsed = generationResultSchema.safeParse(applyOutputOptions(value, output));
@@ -118,19 +117,6 @@ export function validateGenerationResult(
     return {
       ok: false,
       error: createAppError("VALIDATION", "Ответ модели не соответствует формату.", parsed.error),
-    };
-  }
-
-  const wordCount = countWords(parsed.data.letter);
-  const { min, max } = getLetterWordRange(expectedLength);
-
-  if (wordCount < min || wordCount > max) {
-    return {
-      ok: false,
-      error: createAppError(
-        "VALIDATION",
-        `Длина письма (${wordCount} слов) не соответствует настройке (${min}–${max} слов).`,
-      ),
     };
   }
 

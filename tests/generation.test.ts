@@ -186,13 +186,10 @@ describe("validateGenerationResult", () => {
     expect(result.ok).toBe(false);
   });
 
-  it("rejects letter outside word range", () => {
+  it("accepts letter outside configured word range", () => {
     const result = validateGenerationResult(buildValidResult(20), "medium");
 
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error.message).toContain("Длина письма");
-    }
+    expect(result.ok).toBe(true);
   });
 });
 
