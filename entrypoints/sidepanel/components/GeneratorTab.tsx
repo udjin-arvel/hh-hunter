@@ -192,8 +192,6 @@ export function GeneratorTab() {
             value={settings.focus}
             onChange={(event) => updateSettings({ focus: event.target.value })}
             placeholder="Любые дополнительные пожелания к письму…"
-            maxLength={500}
-            rows={2}
             className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2 text-[12px] leading-snug outline-none placeholder:text-muted-foreground focus:border-foreground"
           />
         </div>
