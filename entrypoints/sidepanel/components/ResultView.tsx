@@ -9,9 +9,10 @@ import type { GenerationResult } from "@/lib/types";
 
 interface ResultViewProps {
   result: GenerationResult;
+  onScrollToTop?: () => void;
 }
 
-export function ResultView({ result }: ResultViewProps) {
+export function ResultView({ result, onScrollToTop }: ResultViewProps) {
   const includeTheses = useAppStore((state) => state.settings.includeTheses);
   const includeHiddenKeys = useAppStore((state) => state.settings.includeHiddenKeys);
   const letterDraft = useAppStore((state) => state.letterDraft);
@@ -24,8 +25,6 @@ export function ResultView({ result }: ResultViewProps) {
   const copyLetterToClipboard = useAppStore((state) => state.copyLetterToClipboard);
   const copyThesesToClipboard = useAppStore((state) => state.copyThesesToClipboard);
   const regenerateLetter = useAppStore((state) => state.regenerateLetter);
-  const openVacancyReply = useAppStore((state) => state.openVacancyReply);
-
   const displayLetter = getDisplayLetter(letterDraft, result.letter);
   const displayTheses = thesesDraft ?? formatThesesForDisplay(result.theses);
   const letterCounter = `${countWords(displayLetter)} слов`;
@@ -114,10 +113,10 @@ export function ResultView({ result }: ResultViewProps) {
         </button>
         <button
           type="button"
-          onClick={() => openVacancyReply()}
+          onClick={() => onScrollToTop?.()}
           className="rounded-xl border border-border px-3 py-2 text-[12px]"
         >
-          Отклик ↗
+          Наверх ↑
         </button>
       </div>
     </div>

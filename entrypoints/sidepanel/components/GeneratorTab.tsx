@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { sortExamplesForPicker, useAppStore } from "@/lib/store";
 import type { FantasyLevel, LetterLength } from "@/lib/types";
@@ -53,6 +53,11 @@ export function GeneratorTab() {
   const canGenerate = !generationInputError && !isGenerating;
   const pickerExamples = sortExamplesForPicker(examples);
   const [isRefreshingActiveTab, setIsRefreshingActiveTab] = useState(false);
+  const topRef = useRef<HTMLDivElement>(null);
+
+  const scrollToTop = useCallback(() => {
+    topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
 
   const handleRefreshActiveTab = useCallback(async () => {
     setIsRefreshingActiveTab(true);
@@ -90,7 +95,7 @@ export function GeneratorTab() {
   }, [refreshActiveTabInfo, checkGenerationReadiness]);
 
   return (
-    <div className="space-y-4">
+    <div ref={topRef} className="space-y-4">
       <div className="rounded-2xl border border-border bg-surface/60 p-3">
         <div className="mb-2 flex items-center justify-between text-[11px] text-muted-foreground">
           <span>Активная вкладка</span>
@@ -255,7 +260,7 @@ export function GeneratorTab() {
               Сгенерировано за {formatDuration(generationDurationMs)}
             </p>
           )}
-          <ResultView result={generationResult} />
+          <ResultView result={generationResult} onScrollToTop={scrollToTop} />
         </>
       )}
     </div>
