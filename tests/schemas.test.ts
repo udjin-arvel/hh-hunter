@@ -11,6 +11,7 @@ describe("profileSchema", () => {
       name: "",
       portfolioLink: "",
       portfolioText: "",
+      technologiesToStudy: [],
     });
   });
 });
@@ -26,6 +27,7 @@ describe("generationSettingsSchema", () => {
       exampleIds: [],
       includeTheses: true,
       includeHiddenKeys: true,
+      includeTechnologies: true,
     });
   });
 });

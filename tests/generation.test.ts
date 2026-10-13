@@ -15,6 +15,7 @@ const profile: Profile = {
   name: "Александр",
   portfolioLink: "",
   portfolioText: "а".repeat(100),
+  technologiesToStudy: [],
 };
 
 const vacancy: Vacancy = {
@@ -35,6 +36,7 @@ const settings: GenerationSettings = {
   exampleIds: [],
   includeTheses: true,
   includeHiddenKeys: true,
+  includeTechnologies: true,
 };
 
 function buildLetter(wordCount: number): string {
@@ -145,13 +147,33 @@ describe("validateGenerationResult", () => {
         theses: ["Лишний тезис."],
       },
       "medium",
-      { includeTheses: false, includeHiddenKeys: false },
+      { includeTheses: false, includeHiddenKeys: false, includeTechnologies: false },
     );
 
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.result.theses).toEqual([]);
       expect(result.result.hidden_keys).toEqual([]);
+      expect(result.result.technologies).toEqual([]);
+    }
+  });
+
+  it("sanitizes messy technologies without failing validation", () => {
+    const longName = "x".repeat(120);
+    const result = validateGenerationResult(
+      {
+        hidden_keys: ["ключ1", "ключ2", "ключ3"],
+        technologies: ["  Redis  ", "", "redis", longName, "Go"],
+        unique_intersection: "Достаточно длинная точка пересечения для валидации.",
+        letter: buildLetter(100),
+        theses: buildTheses(5),
+      },
+      "medium",
+    );
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.result.technologies).toEqual(["Redis", "Go"]);
     }
   });
 
@@ -163,7 +185,7 @@ describe("validateGenerationResult", () => {
         letter: buildLetter(100),
       },
       "medium",
-      { includeTheses: true, includeHiddenKeys: true },
+      { includeTheses: true, includeHiddenKeys: true, includeTechnologies: true },
     );
 
     expect(result.ok).toBe(false);

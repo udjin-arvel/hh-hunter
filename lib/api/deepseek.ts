@@ -166,6 +166,7 @@ export async function generateLetter(
   const result = parseGenerationResult(content, expectedLength, {
     includeTheses: options?.includeTheses ?? true,
     includeHiddenKeys: options?.includeHiddenKeys ?? true,
+    includeTechnologies: options?.includeTechnologies ?? true,
   });
 
   if (!result.ok) {

@@ -23,6 +23,7 @@ import {
 } from "./messaging";
 import { buildGenerationRequest as createGenerationRequest, resolveSelectedExamples } from "./prompts";
 import { getProfilePreviewText, truncatePreview } from "./profile";
+import { mergeTechnologiesToStudy } from "./technologies";
 import {
   loadPersistedState,
   saveActiveTab,
@@ -75,7 +76,8 @@ interface AppState {
   updateProfile: (patch: Partial<Profile>) => void;
   updateSettings: (patch: Partial<GenerationSettings>) => void;
   processProfile: (rawText: string) => Promise<void>;
-  saveProfileText: (text: string) => Promise<void>;
+  saveProfileText: (text: string) => Promise<boolean>;
+  removeTechnologyToStudy: (name: string) => Promise<void>;
   clearProfilePreview: () => void;
   refreshActiveTabInfo: () => Promise<void>;
   scanActiveTab: () => Promise<void>;
@@ -271,6 +273,26 @@ export const useAppStore = create<AppState>((set, get) => ({
         profilePreview: buildProfilePreview(profile),
         generationInputError: resolveGenerationInputError(profile, get().vacancy, get().settings),
       });
+      return true;
+    } catch (error) {
+      set({ saveError: toAppError(error).message });
+      return false;
+    } finally {
+      set({ isSaving: false });
+    }
+  },
+
+  removeTechnologyToStudy: async (name) => {
+    const key = name.toLocaleLowerCase("ru");
+    const technologiesToStudy = get().profile.technologiesToStudy.filter(
+      (tech) => tech.toLocaleLowerCase("ru") !== key,
+    );
+    const profile = { ...get().profile, technologiesToStudy };
+
+    try {
+      set({ isSaving: true, saveError: null });
+      await persistProfile(profile);
+      set({ profile });
     } catch (error) {
       set({ saveError: toAppError(error).message });
     } finally {
@@ -436,7 +458,25 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     try {
       const result = await generateLetterFromContext(profile, vacancy, settings, selectedExamples);
-      set({ generationResult: result, generationError: null, letterDraft: null, thesesDraft: null });
+      let nextProfile = profile;
+
+      if (settings.includeTechnologies && result.technologies.length > 0) {
+        const technologiesToStudy = mergeTechnologiesToStudy(
+          profile.technologiesToStudy,
+          result.technologies,
+        );
+        nextProfile = { ...profile, technologiesToStudy };
+        await persistProfile(nextProfile);
+      }
+
+      set({
+        generationResult: result,
+        generationError: null,
+        letterDraft: null,
+        thesesDraft: null,
+        profile: nextProfile,
+        generationInputError: resolveGenerationInputError(nextProfile, vacancy, settings),
+      });
     } catch (error) {
       const message = getErrorMessage(error);
 

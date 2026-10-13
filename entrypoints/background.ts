@@ -127,6 +127,7 @@ export default defineBackground(() => {
             signal: abortController.signal,
             includeTheses: settings.includeTheses,
             includeHiddenKeys: settings.includeHiddenKeys,
+            includeTechnologies: settings.includeTechnologies,
           });
           sendResponse(
             generateLetterSuccessSchema.parse({

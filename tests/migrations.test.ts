@@ -83,6 +83,7 @@ describe("migrateRawStorage edge cases", () => {
 
     expect(legacy.settings.includeTheses).toBe(true);
     expect(legacy.settings.includeHiddenKeys).toBe(true);
+    expect(legacy.settings.includeTechnologies).toBe(true);
 
     const current = migrateRawStorage({
       version: 3,
@@ -101,6 +102,32 @@ describe("migrateRawStorage edge cases", () => {
 
     expect(current.settings.includeTheses).toBe(false);
     expect(current.settings.includeHiddenKeys).toBe(false);
+    expect(current.settings.includeTechnologies).toBe(true);
+  });
+
+  it("preserves technologiesToStudy from v3 profile", () => {
+    const result = migrateRawStorage({
+      version: 3,
+      profile: {
+        name: "",
+        portfolioLink: "",
+        portfolioText: "text",
+        technologiesToStudy: ["Redis", "Go"],
+      },
+      settings: {
+        length: "medium",
+        focus: "",
+        fantasy: "medium",
+        exampleIds: [],
+        includeTheses: true,
+        includeHiddenKeys: true,
+        includeTechnologies: true,
+      },
+      examples: [],
+      ui: { activeTab: "generator" },
+    });
+
+    expect(result.profile.technologiesToStudy).toEqual(["Redis", "Go"]);
   });
 
   it("does not preserve apiKey from legacy v0", () => {

@@ -216,6 +216,14 @@ export function GeneratorTab() {
             />
             <span>Скрытые ключи вакансии</span>
           </label>
+          <label className="flex cursor-pointer items-center gap-2 rounded-lg px-1 py-1 text-[12px] hover:bg-surface/80">
+            <input
+              type="checkbox"
+              checked={settings.includeTechnologies}
+              onChange={(event) => updateSettings({ includeTechnologies: event.target.checked })}
+            />
+            <span>Технологии</span>
+          </label>
         </div>
       </div>
 

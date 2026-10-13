@@ -18,10 +18,27 @@ function normalizeFantasy(value: unknown): "low" | "medium" | "high" {
   return "medium";
 }
 
+function normalizeStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const result: string[] = [];
+
+  for (const item of value) {
+    if (typeof item === "string" && item.trim()) {
+      result.push(item.trim());
+    }
+  }
+
+  return result;
+}
+
 function normalizeProfileFromLegacy(profile: Record<string, unknown>): {
   name: string;
   portfolioLink: string;
   portfolioText: string;
+  technologiesToStudy: string[];
 } {
   const portfolioTextRaw =
     typeof profile.portfolioText === "string" ? profile.portfolioText.trim() : "";
@@ -34,6 +51,7 @@ function normalizeProfileFromLegacy(profile: Record<string, unknown>): {
     name: typeof profile.name === "string" ? profile.name : "",
     portfolioLink: typeof profile.portfolioLink === "string" ? profile.portfolioLink : "",
     portfolioText,
+    technologiesToStudy: normalizeStringArray(profile.technologiesToStudy),
   };
 }
 
@@ -48,6 +66,7 @@ function normalizeSettingsFromLegacy(settings: Record<string, unknown>): {
   exampleIds: string[];
   includeTheses: boolean;
   includeHiddenKeys: boolean;
+  includeTechnologies: boolean;
 } {
   const length =
     settings.length === "short" || settings.length === "long" ? settings.length : "medium";
@@ -61,6 +80,7 @@ function normalizeSettingsFromLegacy(settings: Record<string, unknown>): {
       : [],
     includeTheses: normalizeBoolean(settings.includeTheses, true),
     includeHiddenKeys: normalizeBoolean(settings.includeHiddenKeys, true),
+    includeTechnologies: normalizeBoolean(settings.includeTechnologies, true),
   };
 }
 

@@ -9,6 +9,7 @@ import type {
   Profile,
   Vacancy,
 } from "./types";
+import { cleanTechnologiesFromModel } from "./technologies";
 import {
   HIDDEN_KEYS_COUNT_MAX,
   HIDDEN_KEYS_COUNT_MIN,
@@ -19,11 +20,13 @@ import {
 export interface GenerationOutputOptions {
   includeTheses: boolean;
   includeHiddenKeys: boolean;
+  includeTechnologies: boolean;
 }
 
 const DEFAULT_GENERATION_OUTPUT: GenerationOutputOptions = {
   includeTheses: true,
   includeHiddenKeys: true,
+  includeTechnologies: true,
 };
 
 const MIN_PROFILE_CHARS = 100;
@@ -103,7 +106,22 @@ function applyOutputOptions(value: unknown, output: GenerationOutputOptions): un
     delete next.theses;
   }
 
+  if (!output.includeTechnologies) {
+    delete next.technologies;
+  }
+
   return next;
+}
+
+function sanitizeTechnologiesField(value: unknown, output: GenerationOutputOptions): unknown {
+  if (!output.includeTechnologies || !isRecord(value)) {
+    return value;
+  }
+
+  return {
+    ...value,
+    technologies: cleanTechnologiesFromModel(value.technologies),
+  };
 }
 
 export function validateGenerationResult(
@@ -111,7 +129,8 @@ export function validateGenerationResult(
   _expectedLength: LetterLength,
   output: GenerationOutputOptions = DEFAULT_GENERATION_OUTPUT,
 ): { ok: true; result: GenerationResult } | { ok: false; error: AppError } {
-  const parsed = generationResultSchema.safeParse(applyOutputOptions(value, output));
+  const prepared = sanitizeTechnologiesField(applyOutputOptions(value, output), output);
+  const parsed = generationResultSchema.safeParse(prepared);
 
   if (!parsed.success) {
     return {

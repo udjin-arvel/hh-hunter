@@ -7,6 +7,7 @@ const baseProfile: Profile = {
   name: "Test",
   portfolioLink: "",
   portfolioText: "",
+  technologiesToStudy: [],
 };
 
 describe("getProfilePreviewText", () => {

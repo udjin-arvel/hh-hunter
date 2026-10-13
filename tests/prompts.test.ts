@@ -21,6 +21,7 @@ const profile: Profile = {
   portfolioLink: "https://example.com",
   portfolioText:
     "Опыт продуктового дизайна более 5 лет. Вёл миграцию B2B-модуля на новую дизайн-систему.",
+  technologiesToStudy: [],
 };
 
 const vacancy: Vacancy = {
@@ -42,6 +43,7 @@ const settings: GenerationSettings = {
   exampleIds: [],
   includeTheses: true,
   includeHiddenKeys: true,
+  includeTechnologies: true,
 };
 
 const example: LetterExample = {
@@ -135,22 +137,25 @@ describe("buildUserPrompt", () => {
     );
   });
 
-  it("omits theses and hidden keys from the prompt when disabled", () => {
+  it("omits optional blocks from the prompt when disabled", () => {
     const disabled = {
       ...settings,
       includeTheses: false,
       includeHiddenKeys: false,
+      includeTechnologies: false,
     };
     const prompt = buildUserPrompt(profile, vacancy, disabled);
     const system = buildSystemPrompt(disabled);
 
     expect(prompt).not.toContain("theses");
     expect(prompt).not.toContain("hidden_keys");
+    expect(prompt).not.toContain("technologies");
     expect(prompt).not.toContain("Тезисы");
     expect(prompt).toContain("unique_intersection");
-    expect(prompt).toContain("связное письмо (letter)");
+    expect(prompt).toContain("текст отклика (letter)");
     expect(system).not.toContain("theses");
     expect(system).not.toContain("hidden_keys");
+    expect(system).not.toContain("technologies");
     expect(system).toContain('"letter"');
   });
 
@@ -163,11 +168,18 @@ describe("buildUserPrompt", () => {
       ...settings,
       includeTheses: false,
     });
+    const techOnly = buildUserPrompt(profile, vacancy, {
+      ...settings,
+      includeHiddenKeys: false,
+      includeTheses: false,
+    });
 
     expect(thesesOnly).toContain("theses");
     expect(thesesOnly).not.toContain("hidden_keys");
     expect(keysOnly).toContain("hidden_keys");
     expect(keysOnly).not.toContain("theses");
+    expect(techOnly).toContain("technologies");
+    expect(techOnly).not.toContain("hidden_keys");
   });
 
   it("adds short-letter rules for краткое письмо", () => {
@@ -200,12 +212,19 @@ describe("SYSTEM_PROMPT", () => {
     expect(SYSTEM_PROMPT).toContain("деловой");
     expect(SYSTEM_PROMPT).toContain("theses");
     expect(SYSTEM_PROMPT).toContain("hidden_keys");
+    expect(SYSTEM_PROMPT).toContain("technologies");
     expect(SYSTEM_PROMPT).toContain("уровень фантазии");
     expect(SYSTEM_PROMPT).toContain("преимущественно на английском");
     expect(SYSTEM_PROMPT).toContain("только на русском");
     expect(SYSTEM_PROMPT).toContain("Здравствуйте. Я");
-    expect(SYSTEM_PROMPT).toContain("мета-фразы");
+    expect(SYSTEM_PROMPT).toContain("мета-фраз");
     expect(SYSTEM_PROMPT).toContain("длинное тире");
+    expect(SYSTEM_PROMPT).toContain("в чате");
+    expect(SYSTEM_PROMPT).toContain("рубленые фразы");
+    expect(SYSTEM_PROMPT).toContain("высоконагруженный");
+    expect(SYSTEM_PROMPT).toContain("выстраивал процессы");
+    expect(SYSTEM_PROMPT).toContain("Если интересно, можем продолжить общение");
+    expect(SYSTEM_PROMPT).not.toContain("сопроводительное письмо");
   });
 });
 
@@ -233,10 +252,12 @@ describe("buildGenerationRequest", () => {
       ...settings,
       includeTheses: false,
       includeHiddenKeys: false,
+      includeTechnologies: false,
     });
 
     expect(request.system).not.toContain("theses");
     expect(request.system).not.toContain("hidden_keys");
+    expect(request.system).not.toContain("technologies");
   });
 });
 

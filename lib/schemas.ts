@@ -20,6 +20,7 @@ export const profileSchema = z.object({
   name: z.string().default(""),
   portfolioLink: z.string().default(""),
   portfolioText: z.string().default(""),
+  technologiesToStudy: z.array(z.string().min(1)).default([]),
 });
 
 export const vacancySchema = z.object({
@@ -52,10 +53,12 @@ export const generationSettingsSchema = z.object({
   exampleIds: z.array(z.string()).default([]),
   includeTheses: z.boolean().default(true),
   includeHiddenKeys: z.boolean().default(true),
+  includeTechnologies: z.boolean().default(true),
 });
 
 export const generationResultSchema = z.object({
   hidden_keys: z.array(z.string().min(1)).default([]),
+  technologies: z.array(z.string().min(1)).default([]),
   unique_intersection: z.string().min(20),
   letter: z.string().min(1),
   theses: z.array(z.string().min(1)).default([]),
