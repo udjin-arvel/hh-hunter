@@ -23,7 +23,7 @@ import {
 } from "./messaging";
 import { buildGenerationRequest as createGenerationRequest, resolveSelectedExamples } from "./prompts";
 import { getProfilePreviewText, truncatePreview } from "./profile";
-import { mergeTechnologiesToStudy } from "./technologies";
+import { mergeHiddenTechnologies, mergeTechnologiesToStudy, technologyLookupKey } from "./technologies";
 import {
   loadPersistedState,
   saveActiveTab,
@@ -283,11 +283,16 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   removeTechnologyToStudy: async (name) => {
-    const key = name.toLocaleLowerCase("ru");
-    const technologiesToStudy = get().profile.technologiesToStudy.filter(
-      (tech) => tech.toLocaleLowerCase("ru") !== key,
+    const key = technologyLookupKey(name);
+    const current = get().profile;
+    const technologiesToStudy = current.technologiesToStudy.filter(
+      (tech) => technologyLookupKey(tech) !== key,
     );
-    const profile = { ...get().profile, technologiesToStudy };
+    const hiddenTechnologiesToStudy = mergeHiddenTechnologies(
+      current.hiddenTechnologiesToStudy,
+      name,
+    );
+    const profile = { ...current, technologiesToStudy, hiddenTechnologiesToStudy };
 
     try {
       set({ isSaving: true, saveError: null });
@@ -464,6 +469,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         const technologiesToStudy = mergeTechnologiesToStudy(
           profile.technologiesToStudy,
           result.technologies,
+          profile.hiddenTechnologiesToStudy,
         );
         nextProfile = { ...profile, technologiesToStudy };
         await persistProfile(nextProfile);

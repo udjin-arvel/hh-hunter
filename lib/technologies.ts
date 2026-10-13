@@ -47,7 +47,51 @@ export function cleanTechnologiesFromModel(values: unknown): string[] {
   return result;
 }
 
-export function mergeTechnologiesToStudy(existing: string[], incoming: string[]): string[] {
+export function technologyLookupKey(name: string): string {
+  return name.toLocaleLowerCase("ru");
+}
+
+export function mergeHiddenTechnologies(existing: string[], name: string): string[] {
+  const normalized = normalizeTechnologyName(name);
+
+  if (!normalized) {
+    return existing;
+  }
+
+  const byKey = new Map<string, string>();
+
+  for (const item of existing) {
+    const itemNormalized = normalizeTechnologyName(item);
+
+    if (!itemNormalized) {
+      continue;
+    }
+
+    byKey.set(technologyLookupKey(itemNormalized), itemNormalized);
+  }
+
+  byKey.set(technologyLookupKey(normalized), normalized);
+
+  return [...byKey.values()];
+}
+
+export function mergeTechnologiesToStudy(
+  existing: string[],
+  incoming: string[],
+  hidden: string[] = [],
+): string[] {
+  const hiddenKeys = new Set<string>();
+
+  for (const item of hidden) {
+    const normalized = normalizeTechnologyName(item);
+
+    if (!normalized) {
+      continue;
+    }
+
+    hiddenKeys.add(technologyLookupKey(normalized));
+  }
+
   const byKey = new Map<string, string>();
 
   for (const name of existing) {
@@ -57,7 +101,13 @@ export function mergeTechnologiesToStudy(existing: string[], incoming: string[])
       continue;
     }
 
-    byKey.set(normalized.toLocaleLowerCase("ru"), normalized);
+    const key = technologyLookupKey(normalized);
+
+    if (hiddenKeys.has(key)) {
+      continue;
+    }
+
+    byKey.set(key, normalized);
   }
 
   for (const name of incoming) {
@@ -67,11 +117,13 @@ export function mergeTechnologiesToStudy(existing: string[], incoming: string[])
       continue;
     }
 
-    const key = normalized.toLocaleLowerCase("ru");
+    const key = technologyLookupKey(normalized);
 
-    if (!byKey.has(key)) {
-      byKey.set(key, normalized);
+    if (hiddenKeys.has(key) || byKey.has(key)) {
+      continue;
     }
+
+    byKey.set(key, normalized);
   }
 
   return [...byKey.values()];

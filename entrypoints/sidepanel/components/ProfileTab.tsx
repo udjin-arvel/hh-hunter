@@ -147,7 +147,7 @@ export function ProfileTab() {
                   {tech}
                   <button
                     type="button"
-                    aria-label={`Убрать ${tech}`}
+                    aria-label={`Скрыть ${tech}`}
                     onClick={() => void removeTechnologyToStudy(tech)}
                     className="text-muted-foreground hover:text-foreground"
                   >

@@ -39,6 +39,7 @@ function normalizeProfileFromLegacy(profile: Record<string, unknown>): {
   portfolioLink: string;
   portfolioText: string;
   technologiesToStudy: string[];
+  hiddenTechnologiesToStudy: string[];
 } {
   const portfolioTextRaw =
     typeof profile.portfolioText === "string" ? profile.portfolioText.trim() : "";
@@ -52,6 +53,7 @@ function normalizeProfileFromLegacy(profile: Record<string, unknown>): {
     portfolioLink: typeof profile.portfolioLink === "string" ? profile.portfolioLink : "",
     portfolioText,
     technologiesToStudy: normalizeStringArray(profile.technologiesToStudy),
+    hiddenTechnologiesToStudy: normalizeStringArray(profile.hiddenTechnologiesToStudy),
   };
 }
 

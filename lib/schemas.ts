@@ -21,6 +21,7 @@ export const profileSchema = z.object({
   portfolioLink: z.string().default(""),
   portfolioText: z.string().default(""),
   technologiesToStudy: z.array(z.string().min(1)).default([]),
+  hiddenTechnologiesToStudy: z.array(z.string().min(1)).default([]),
 });
 
 export const vacancySchema = z.object({

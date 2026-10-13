@@ -12,6 +12,7 @@ describe("profileSchema", () => {
       portfolioLink: "",
       portfolioText: "",
       technologiesToStudy: [],
+      hiddenTechnologiesToStudy: [],
     });
   });
 });

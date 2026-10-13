@@ -44,4 +44,16 @@ describe("mergeTechnologiesToStudy", () => {
 
     expect(merged).toEqual(["PostgreSQL"]);
   });
+
+  it("does not re-add technologies the user hid", () => {
+    const merged = mergeTechnologiesToStudy(["Go"], ["Redis", "DDD"], ["Redis"]);
+
+    expect(merged).toEqual(["Go", "DDD"]);
+  });
+
+  it("drops hidden technologies still present in the existing list", () => {
+    const merged = mergeTechnologiesToStudy(["Redis", "Go"], [], ["redis"]);
+
+    expect(merged).toEqual(["Go"]);
+  });
 });
