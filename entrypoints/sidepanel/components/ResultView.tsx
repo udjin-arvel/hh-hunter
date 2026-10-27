@@ -32,12 +32,12 @@ export function ResultView({ result, onScrollToTop }: ResultViewProps) {
 
   return (
     <div className="space-y-3 pt-1">
-      <div className="rounded-2xl border border-accent/40 bg-accent/10 p-3">
-        <div className="mb-1 text-[10px] font-medium uppercase tracking-wider text-accent-foreground/80">
+      <details className="rounded-2xl border border-accent/40 bg-accent/10 p-3">
+        <summary className="cursor-pointer text-[10px] font-medium uppercase tracking-wider text-accent-foreground/80">
           Точка пересечения
-        </div>
-        <p className="text-[12px] leading-relaxed">{result.unique_intersection}</p>
-      </div>
+        </summary>
+        <p className="mt-2 text-[12px] leading-relaxed">{result.unique_intersection}</p>
+      </details>
 
       <div className="rounded-2xl border border-border p-3">
         <div className="mb-1.5 flex items-center justify-between text-[10px] uppercase tracking-wider text-muted-foreground">
