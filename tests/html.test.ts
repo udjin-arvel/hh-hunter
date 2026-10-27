@@ -1,6 +1,9 @@
+/**
+ * @vitest-environment happy-dom
+ */
 import { describe, expect, it } from "vitest";
 
-import { isInformativeText, normalizeWhitespace, stripHtmlToText } from "@/lib/html";
+import { htmlToMarkdown, isInformativeText, normalizeWhitespace, stripHtmlToText } from "@/lib/html";
 
 describe("stripHtmlToText", () => {
   it("removes scripts, styles and tags", () => {
@@ -22,6 +25,16 @@ describe("stripHtmlToText", () => {
 describe("normalizeWhitespace", () => {
   it("collapses whitespace", () => {
     expect(normalizeWhitespace("  one   two \n three ")).toBe("one two three");
+  });
+});
+
+describe("htmlToMarkdown", () => {
+  it("converts paragraphs, emphasis and lists", () => {
+    const markdown = htmlToMarkdown(
+      "<p>Опыт с <strong>Figma</strong>.</p><p>Второй блок.</p><ul><li>UX</li><li>UI</li></ul>",
+    );
+
+    expect(markdown).toBe("Опыт с **Figma**.\n\nВторой блок.\n\n- UX\n- UI");
   });
 });
 

@@ -1,3 +1,6 @@
+/**
+ * @vitest-environment happy-dom
+ */
 import { describe, expect, it } from "vitest";
 
 import {
@@ -42,5 +45,18 @@ describe("formatVacancyAsMarkdown", () => {
     expect(markdown).toContain("**Навыки:** Figma, UX");
     expect(markdown).toContain("## Описание");
     expect(markdown).toContain("Опыт работы с Figma.");
+  });
+
+  it("preserves formatting from vacancy HTML", () => {
+    const markdown = formatVacancyAsMarkdown({
+      ...sampleVacancy,
+      description: "Первый абзац. Второй абзац.",
+      description_html:
+        "<p>Первый абзац.</p><p>Второй абзац.</p><ul><li>Пункт один</li><li>Пункт два</li></ul>",
+    });
+
+    expect(markdown).toContain("Первый абзац.\n\nВторой абзац.");
+    expect(markdown).toContain("- Пункт один");
+    expect(markdown).toContain("- Пункт два");
   });
 });

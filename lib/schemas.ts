@@ -30,6 +30,7 @@ export const vacancySchema = z.object({
   company_name: z.string().min(1),
   company_type: z.string().default(""),
   description: z.string().default(""),
+  description_html: z.string().default(""),
   key_skills: z.array(z.string()).default([]),
   experience_required: z.string().default(""),
   employment: z.string().default(""),

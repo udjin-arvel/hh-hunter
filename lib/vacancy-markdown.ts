@@ -1,4 +1,13 @@
+import { htmlToMarkdown } from "./html";
 import type { Vacancy } from "./types";
+
+function vacancyDescriptionMarkdown(vacancy: Vacancy): string {
+  if (vacancy.description_html) {
+    return htmlToMarkdown(vacancy.description_html);
+  }
+
+  return vacancy.description;
+}
 
 const INVALID_FILENAME_CHARS = /[\\/:*?"<>|]/g;
 
@@ -45,8 +54,10 @@ export function formatVacancyAsMarkdown(vacancy: Vacancy): string {
 
   lines.push("");
 
-  if (vacancy.description) {
-    lines.push("## Описание", "", vacancy.description, "");
+  const descriptionMarkdown = vacancyDescriptionMarkdown(vacancy);
+
+  if (descriptionMarkdown) {
+    lines.push("## Описание", "", descriptionMarkdown, "");
   }
 
   return `${lines.join("\n").trimEnd()}\n`;

@@ -74,7 +74,8 @@ export function truncateVacancyDescription(
 }
 
 export function mapHhVacancyToLocal(api: HhVacancyResponse, sourceUrl?: string): Vacancy {
-  const description = truncateVacancyDescription(stripHtmlToText(api.description ?? ""));
+  const descriptionHtml = (api.description ?? "").trim();
+  const description = truncateVacancyDescription(stripHtmlToText(descriptionHtml));
 
   return {
     id: api.id,
@@ -82,6 +83,7 @@ export function mapHhVacancyToLocal(api: HhVacancyResponse, sourceUrl?: string):
     company_name: api.employer?.name ?? "Неизвестная компания",
     company_type: mapCompanyType(api.employer?.type),
     description,
+    description_html: descriptionHtml,
     key_skills: (api.key_skills ?? []).map((skill) => skill.name),
     experience_required: api.experience?.name ?? "",
     employment: mapEmployment(api.schedule, api.employment),

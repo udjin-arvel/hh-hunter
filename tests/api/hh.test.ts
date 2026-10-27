@@ -33,6 +33,7 @@ describe("mapHhVacancyToLocal", () => {
     expect(vacancy.company_name).toBe("Тинькофф");
     expect(vacancy.company_type).toBe("крупный бизнес");
     expect(vacancy.description).toBe("Опыт работы с Figma .");
+    expect(vacancy.description_html).toBe("<p>Опыт работы с <strong>Figma</strong>.</p>");
     expect(vacancy.key_skills).toEqual(["Figma", "UX-research"]);
     expect(vacancy.experience_required).toBe("3–6 лет");
     expect(vacancy.employment).toBe("Удаленная работа");
