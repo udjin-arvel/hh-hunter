@@ -190,6 +190,13 @@ describe("buildUserPrompt", () => {
     expect(prompt).toContain("Здравствуйте. Я");
     expect(prompt).toContain("Добрый день, я");
   });
+
+  it("asks to write as a front or back developer for those vacancies", () => {
+    const prompt = buildUserPrompt(profile, vacancy, settings);
+
+    expect(prompt).toContain("фронтенд-разработчика");
+    expect(prompt).toContain("бэкенд-разработчика");
+  });
 });
 
 describe("resolveSelectedExamples", () => {
@@ -224,6 +231,10 @@ describe("SYSTEM_PROMPT", () => {
     expect(SYSTEM_PROMPT).toContain("высоконагруженный");
     expect(SYSTEM_PROMPT).toContain("выстраивал процессы");
     expect(SYSTEM_PROMPT).toContain("Если интересно, можем продолжить общение");
+    expect(SYSTEM_PROMPT).toContain("практические навыки");
+    expect(SYSTEM_PROMPT).toContain("Не выдумывай метрики и проценты");
+    expect(SYSTEM_PROMPT).toContain("фронтенд-разработчика");
+    expect(SYSTEM_PROMPT).toContain("бэкенд-разработчика");
     expect(SYSTEM_PROMPT).not.toContain("сопроводительное письмо");
   });
 });

@@ -3,10 +3,32 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { sortExamplesForPicker, useAppStore } from "@/lib/store";
 import type { FantasyLevel, LetterLength } from "@/lib/types";
 
+import { downloadVacancyMarkdown } from "@/lib/vacancy-markdown";
+
 import { GenerationProgress } from "./GenerationProgress";
 import { ResultView } from "./ResultView";
 import { Segmented } from "./Segmented";
 import { VacancyCard } from "./VacancyCard";
+
+function DownloadIcon() {
+  return (
+    <svg
+      width={18}
+      height={18}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="7 10 12 15 17 10" />
+      <line x1="12" y1="15" x2="12" y2="3" />
+    </svg>
+  );
+}
 
 function formatActiveTabUrl(url: string | null): string {
   if (!url) {
@@ -97,15 +119,30 @@ export function GeneratorTab() {
   return (
     <div ref={topRef} className="space-y-4">
       <div className="rounded-2xl border border-border bg-surface/60 p-3">
-        <div className="mb-2 flex items-center justify-between text-[11px] text-muted-foreground">
-          <span>Активная вкладка</span>
-          {isHhVacancyTab ? (
-            <span className="inline-flex items-center gap-1 text-success">
-              <span className="h-1.5 w-1.5 rounded-full bg-success" />
-              hh.ru/vacancy
-            </span>
-          ) : (
-            <span className="text-muted-foreground">не вакансия HH</span>
+        <div className="mb-2 flex items-start justify-between gap-2">
+          <div className="min-w-0 text-[11px] text-muted-foreground">
+            <span>Активная вкладка</span>
+            <div className="mt-1">
+              {isHhVacancyTab ? (
+                <span className="inline-flex items-center gap-1 text-success">
+                  <span className="h-1.5 w-1.5 rounded-full bg-success" />
+                  hh.ru/vacancy
+                </span>
+              ) : (
+                <span>не вакансия HH</span>
+              )}
+            </div>
+          </div>
+          {vacancy && (
+            <button
+              type="button"
+              title="Скачать вакансию (.md)"
+              aria-label="Скачать вакансию в формате Markdown"
+              onClick={() => downloadVacancyMarkdown(vacancy)}
+              className="cursor-pointer shrink-0 rounded-lg border border-border p-1.5 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+            >
+              <DownloadIcon />
+            </button>
           )}
         </div>
         <div className="truncate rounded-lg bg-background px-3 py-2 font-mono text-[11px] text-muted-foreground">
