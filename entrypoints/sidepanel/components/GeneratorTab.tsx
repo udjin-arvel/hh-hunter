@@ -170,7 +170,14 @@ export function GeneratorTab() {
 
       {vacancy && <VacancyCard vacancy={vacancy} />}
 
-      <div className="space-y-2.5">
+      <details
+        open
+        className="rounded-2xl border border-border bg-surface/60 p-3"
+      >
+        <summary className="cursor-pointer text-[11px] font-medium text-muted-foreground">
+          Настройки
+        </summary>
+        <div className="mt-2.5 space-y-2.5">
         <Segmented<LetterLength>
           label="Длина"
           value={settings.length}
@@ -267,7 +274,8 @@ export function GeneratorTab() {
             <span>Технологии</span>
           </label>
         </div>
-      </div>
+        </div>
+      </details>
 
       {generationInputError && <p className="text-[11px] text-amber-700">{generationInputError}</p>}
 
