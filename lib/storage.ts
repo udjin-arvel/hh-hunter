@@ -32,13 +32,24 @@ export async function savePersistedState(state: PersistedState): Promise<void> {
   await writeRawStorage(parsed);
 }
 
+let persistQueue: Promise<void> = Promise.resolve();
+
 async function updatePersistedState(
   updater: (current: PersistedState) => PersistedState,
 ): Promise<PersistedState> {
-  const current = await loadPersistedState();
-  const next = updater(current);
-  await savePersistedState(next);
-  return next;
+  const run = persistQueue.then(async () => {
+    const current = await loadPersistedState();
+    const next = updater(current);
+    await savePersistedState(next);
+    return next;
+  });
+
+  persistQueue = run.then(
+    () => undefined,
+    () => undefined,
+  );
+
+  return run;
 }
 
 export async function saveProfile(profile: Profile): Promise<void> {

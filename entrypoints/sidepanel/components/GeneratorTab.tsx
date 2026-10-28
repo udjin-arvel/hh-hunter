@@ -76,6 +76,8 @@ export function GeneratorTab() {
   const pickerExamples = sortExamplesForPicker(examples);
   const [isRefreshingActiveTab, setIsRefreshingActiveTab] = useState(false);
   const topRef = useRef<HTMLDivElement>(null);
+  const focusDraftRef = useRef(settings.focus);
+  focusDraftRef.current = settings.focus;
 
   const scrollToTop = useCallback(() => {
     topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -236,7 +238,10 @@ export function GeneratorTab() {
           <div className="mb-1 text-[11px] text-muted-foreground">Пользовательский промпт</div>
           <textarea
             value={settings.focus}
-            onChange={(event) => updateSettings({ focus: event.target.value })}
+            onChange={(event) => {
+              focusDraftRef.current = event.target.value;
+              updateSettings({ focus: event.target.value });
+            }}
             placeholder="Любые дополнительные пожелания к письму…"
             className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2 text-[12px] leading-snug outline-none placeholder:text-muted-foreground focus:border-foreground"
           />
@@ -279,7 +284,7 @@ export function GeneratorTab() {
       <button
         type="button"
         disabled={!canGenerate}
-        onClick={() => void generateLetter()}
+        onClick={() => void generateLetter(focusDraftRef.current)}
         className="w-full rounded-xl bg-primary py-3 text-[13px] font-medium text-primary-foreground disabled:opacity-60"
       >
         {isGenerating ? "Генерация…" : "Сгенерировать письмо ↗"}

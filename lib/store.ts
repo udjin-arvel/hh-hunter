@@ -84,7 +84,7 @@ interface AppState {
   clearVacancy: () => void;
   checkGenerationReadiness: () => void;
   buildGenerationRequest: () => GenerationRequest | null;
-  generateLetter: () => Promise<void>;
+  generateLetter: (focusDraft?: string) => Promise<void>;
   regenerateLetter: () => Promise<void>;
   cancelGeneration: () => void;
   openVacancyReply: () => void;
@@ -409,7 +409,11 @@ export const useAppStore = create<AppState>((set, get) => ({
     return createGenerationRequest(profile, vacancy, settings, selectedExamples);
   },
 
-  generateLetter: async () => {
+  generateLetter: async (focusDraft) => {
+    if (typeof focusDraft === "string" && focusDraft !== get().settings.focus) {
+      get().updateSettings({ focus: focusDraft });
+    }
+
     const { profile, vacancy, settings, examples, isGenerating } = get();
 
     if (isGenerating) {
@@ -462,7 +466,8 @@ export const useAppStore = create<AppState>((set, get) => ({
     );
 
     try {
-      const result = await generateLetterFromContext(profile, vacancy, settings, selectedExamples);
+      const request = createGenerationRequest(profile, vacancy, settings, selectedExamples);
+      const result = await generateLetterFromContext(settings, request);
       let nextProfile = profile;
 
       if (settings.includeTechnologies && result.technologies.length > 0) {

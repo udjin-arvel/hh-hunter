@@ -2,7 +2,6 @@ import { compressProfileText, generateLetter } from "../lib/api/deepseek";
 import { getDeepSeekApiKey } from "../lib/deepseek-config";
 import { fetchHhVacancy, fetchHhVacancyFromWebsite, fetchHhVacancyViaTab } from "../lib/api/hh";
 import { toAppError } from "../lib/errors";
-import { buildGenerationRequest } from "../lib/prompts";
 import {
   backgroundPingMessageSchema,
   backgroundPongResponseSchema,
@@ -121,8 +120,7 @@ export default defineBackground(() => {
         activeGenerationAbort = abortController;
 
         try {
-          const { profile, vacancy, settings, examples } = generateLetterMessage.data;
-          const request = buildGenerationRequest(profile, vacancy, settings, examples);
+          const { settings, request } = generateLetterMessage.data;
           const result = await generateLetter(getDeepSeekApiKey(), request, settings.length, {
             signal: abortController.signal,
             includeTheses: settings.includeTheses,

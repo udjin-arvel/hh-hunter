@@ -11,10 +11,9 @@ import {
 } from "./schemas";
 import type {
   AppError,
+  GenerationRequest,
   GenerationResult,
   GenerationSettings,
-  LetterExample,
-  Profile,
   Vacancy,
 } from "./types";
 
@@ -65,17 +64,13 @@ export async function fetchVacancyById(
 }
 
 export async function generateLetterFromContext(
-  profile: Profile,
-  vacancy: Vacancy,
   settings: GenerationSettings,
-  examples: LetterExample[] = [],
+  request: GenerationRequest,
 ): Promise<GenerationResult> {
   const message = generateLetterMessageSchema.parse({
     type: "generate_letter",
-    profile,
-    vacancy,
     settings,
-    examples,
+    request,
   });
 
   const response = await browser.runtime.sendMessage(message);

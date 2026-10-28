@@ -133,10 +133,8 @@ export const fetchVacancyResponseSchema = z.discriminatedUnion("ok", [
 
 export const generateLetterMessageSchema = z.object({
   type: z.literal("generate_letter"),
-  profile: profileSchema,
-  vacancy: vacancySchema,
   settings: generationSettingsSchema,
-  examples: z.array(letterExampleSchema).default([]),
+  request: generationRequestSchema,
 });
 
 export const generateLetterSuccessSchema = z.object({
