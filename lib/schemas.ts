@@ -56,7 +56,26 @@ export const generationSettingsSchema = z.object({
   includeTheses: z.boolean().default(true),
   includeHiddenKeys: z.boolean().default(true),
   includeTechnologies: z.boolean().default(true),
+  portfolioLink: z.string().default(""),
 });
+
+export const editSpecSchema = z.object({
+  role: z.string().min(3),
+  familiarity: z.enum(["знаком", "хорошо знаком"]).catch("знаком"),
+  familiar_with: z.array(z.string().min(1)),
+  relevant_work: z.array(z.string().min(1)).default([]),
+});
+
+export const modelGenerationResponseSchema = z
+  .object({
+    edit_spec: editSpecSchema,
+    hidden_keys: z.array(z.string().min(1)).default([]),
+    technologies: z.array(z.string().min(1)).default([]),
+    unique_intersection: z.string().min(20),
+    theses: z.array(z.string().min(1)).default([]),
+    letter: z.string().min(40),
+  })
+  .passthrough();
 
 export const generationResultSchema = z.object({
   hidden_keys: z.array(z.string().min(1)).default([]),
@@ -70,7 +89,7 @@ export const generationRequestSchema = z.object({
   system: z.string().min(1),
   user: z.string().min(1),
   model: z.literal("deepseek-chat"),
-  temperature: z.literal(0.7),
+  temperature: z.literal(0.4),
   response_format: z.object({
     type: z.literal("json_object"),
   }),
@@ -135,6 +154,7 @@ export const generateLetterMessageSchema = z.object({
   type: z.literal("generate_letter"),
   settings: generationSettingsSchema,
   request: generationRequestSchema,
+  vacancy: vacancySchema,
 });
 
 export const generateLetterSuccessSchema = z.object({

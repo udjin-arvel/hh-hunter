@@ -6,6 +6,7 @@ import type {
   appErrorSchema,
   backgroundPingMessageSchema,
   backgroundPongResponseSchema,
+  editSpecSchema,
   fantasyLevelSchema,
   generationRequestSchema,
   generationResultSchema,
@@ -17,6 +18,7 @@ import type {
 
 export type AppErrorCode = z.infer<typeof appErrorCodeSchema>;
 export type AppError = z.infer<typeof appErrorSchema>;
+export type EditSpec = z.infer<typeof editSpecSchema>;
 export type Profile = z.infer<typeof profileSchema>;
 export type Vacancy = z.infer<typeof vacancySchema>;
 export type LetterLength = z.infer<typeof letterLengthSchema>;

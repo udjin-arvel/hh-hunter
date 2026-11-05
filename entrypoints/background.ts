@@ -120,12 +120,14 @@ export default defineBackground(() => {
         activeGenerationAbort = abortController;
 
         try {
-          const { settings, request } = generateLetterMessage.data;
+          const { settings, request, vacancy } = generateLetterMessage.data;
           const result = await generateLetter(getDeepSeekApiKey(), request, settings.length, {
             signal: abortController.signal,
             includeTheses: settings.includeTheses,
             includeHiddenKeys: settings.includeHiddenKeys,
             includeTechnologies: settings.includeTechnologies,
+            vacancy,
+            portfolioLink: settings.portfolioLink,
           });
           sendResponse(
             generateLetterSuccessSchema.parse({

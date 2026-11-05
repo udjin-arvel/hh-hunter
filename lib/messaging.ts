@@ -66,11 +66,13 @@ export async function fetchVacancyById(
 export async function generateLetterFromContext(
   settings: GenerationSettings,
   request: GenerationRequest,
+  vacancy: Vacancy,
 ): Promise<GenerationResult> {
   const message = generateLetterMessageSchema.parse({
     type: "generate_letter",
     settings,
     request,
+    vacancy,
   });
 
   const response = await browser.runtime.sendMessage(message);

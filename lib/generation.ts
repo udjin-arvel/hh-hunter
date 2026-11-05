@@ -1,6 +1,6 @@
 import { createAppError } from "./errors";
 import { isInformativeText } from "./html";
-import { generationResultSchema } from "./schemas";
+import { generationResultSchema, modelGenerationResponseSchema } from "./schemas";
 import type {
   AppError,
   GenerationResult,
@@ -30,6 +30,123 @@ const DEFAULT_GENERATION_OUTPUT: GenerationOutputOptions = {
 };
 
 const MIN_PROFILE_CHARS = 100;
+
+export const EDIT_SPEC_LIMITS: Record<
+  LetterLength,
+  { maxFamiliar: number; maxRelevantWork: number }
+> = {
+  short: { maxFamiliar: 2, maxRelevantWork: 1 },
+  medium: { maxFamiliar: 3, maxRelevantWork: 2 },
+  long: { maxFamiliar: 3, maxRelevantWork: 3 },
+};
+
+export function parseValidPortfolioLink(raw: string | undefined | null): string | null {
+  const trimmed = (raw ?? "").trim();
+
+  if (!trimmed) {
+    return null;
+  }
+
+  try {
+    const url = new URL(trimmed);
+    return url.protocol === "https:" || url.protocol === "http:" ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
+export function buildVacancyCorpus(vacancy: Vacancy): string {
+  const skills = vacancy.key_skills.join(" ");
+  return [vacancy.title, vacancy.description, skills].filter(Boolean).join("\n");
+}
+
+export function isVacancyPredominantlyEnglish(vacancy: Vacancy): boolean {
+  const text = buildVacancyCorpus(vacancy);
+  let latin = 0;
+  let cyrillic = 0;
+
+  for (const char of text) {
+    if (/[a-zA-Z]/.test(char)) {
+      latin += 1;
+    } else if (/[\u0400-\u04FF]/.test(char)) {
+      cyrillic += 1;
+    }
+  }
+
+  if (latin === 0 && cyrillic === 0) {
+    return false;
+  }
+
+  return latin > cyrillic;
+}
+
+const TRAILING_PORTFOLIO_BLOCK =
+  /\n{0,2}(?:Портфолио|Portfolio):\s*\n\s*https?:\/\/\S+\s*$/i;
+
+const LONG_DASH = /[—–―−]/g;
+
+function useShortDash(text: string): string {
+  return text.replace(LONG_DASH, "-");
+}
+
+/** Берёт связный текст модели и дописывает портфолио, если ссылка есть. */
+export function finalizeLetter(
+  letter: string,
+  vacancy: Vacancy,
+  portfolioLinkRaw: string | undefined | null,
+): string {
+  const body = useShortDash(letter).trim().replace(TRAILING_PORTFOLIO_BLOCK, "").trim();
+  const portfolioUrl = parseValidPortfolioLink(portfolioLinkRaw);
+
+  if (!portfolioUrl) {
+    return body;
+  }
+
+  const label = isVacancyPredominantlyEnglish(vacancy) ? "Portfolio:" : "Портфолио:";
+  return `${body}\n\n${label}\n${portfolioUrl}`;
+}
+
+export interface AssembleGenerationResultInput {
+  vacancy: Vacancy;
+  length: LetterLength;
+  portfolioLink: string;
+  output: GenerationOutputOptions;
+  modelPayload: unknown;
+}
+
+export function assembleGenerationResult(
+  input: AssembleGenerationResultInput,
+): { ok: true; result: GenerationResult } | { ok: false; error: AppError } {
+  const prepared = sanitizeTechnologiesField(
+    applyOutputOptions(input.modelPayload, input.output),
+    input.output,
+  );
+
+  const parsedModel = modelGenerationResponseSchema.safeParse(prepared);
+
+  if (!parsedModel.success) {
+    return {
+      ok: false,
+      error: createAppError("VALIDATION", "Ответ модели не соответствует формату.", parsedModel.error),
+    };
+  }
+
+  const letter = finalizeLetter(
+    parsedModel.data.letter,
+    input.vacancy,
+    input.portfolioLink,
+  );
+
+  const resultPayload = {
+    hidden_keys: parsedModel.data.hidden_keys,
+    technologies: parsedModel.data.technologies,
+    unique_intersection: useShortDash(parsedModel.data.unique_intersection),
+    theses: parsedModel.data.theses.map(useShortDash),
+    letter,
+  };
+
+  return validateGenerationResult(resultPayload, input.length, input.output);
+}
 
 export function getDisplayLetter(letterDraft: string | null, letter: string): string {
   return letterDraft ?? letter;
@@ -207,6 +324,7 @@ export function parseGenerationResult(
   raw: string,
   expectedLength: LetterLength,
   output: GenerationOutputOptions = DEFAULT_GENERATION_OUTPUT,
+  assemble?: Omit<AssembleGenerationResultInput, "modelPayload" | "length" | "output">,
 ): { ok: true; result: GenerationResult } | { ok: false; error: AppError } {
   const value = extractJsonValue(raw);
 
@@ -215,6 +333,16 @@ export function parseGenerationResult(
       ok: false,
       error: createAppError("VALIDATION", "Ответ модели не соответствует формату."),
     };
+  }
+
+  if (assemble) {
+    return assembleGenerationResult({
+      modelPayload: value,
+      length: expectedLength,
+      output,
+      vacancy: assemble.vacancy,
+      portfolioLink: assemble.portfolioLink,
+    });
   }
 
   return validateGenerationResult(value, expectedLength, output);

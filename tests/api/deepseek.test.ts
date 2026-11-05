@@ -10,26 +10,40 @@ import {
   mapDeepSeekHttpStatusToError,
   verifyDeepSeekApiKey,
 } from "@/lib/api/deepseek";
-import type { GenerationRequest } from "@/lib/types";
+import type { GenerationRequest, Vacancy } from "@/lib/types";
 
 const request: GenerationRequest = {
   system: "system prompt",
   user: "user prompt",
   model: "deepseek-chat",
-  temperature: 0.7,
+  temperature: 0.4,
   response_format: { type: "json_object" },
 };
 
-function buildLetter(wordCount: number): string {
-  return Array.from({ length: wordCount }, (_, index) => `слово${index + 1}`).join(" ");
-}
+const vacancy: Vacancy = {
+  id: "1",
+  title: "Python-разработчик",
+  company_name: "Test",
+  company_type: "",
+  description: "RAG, LangGraph, FastAPI",
+  description_html: "",
+  key_skills: ["Python", "RAG"],
+  experience_required: "",
+  employment: "",
+};
 
 function buildValidContent() {
   return JSON.stringify({
     hidden_keys: ["ключ1", "ключ2", "ключ3"],
     unique_intersection: "Точка пересечения между опытом и вакансией достаточно длинная.",
-    letter: buildLetter(100),
+    edit_spec: {
+      role: "Python-разработчик",
+      familiar_with: ["RAG", "LangGraph", "FastAPI"],
+      relevant_work: ["Делал RAG-пайплайн для SEO-описаний."],
+    },
     theses: ["Тезис один.", "Тезис два.", "Тезис три.", "Тезис четыре."],
+    letter:
+      "Здравствуйте, заинтересовался вашей вакансией. Хорошо знаком с RAG и Python: делал RAG-пайплайн. Если мой опыт вам интересен, можем продолжить общение.",
   });
 }
 
@@ -110,10 +124,10 @@ describe("generateLetter", () => {
       }),
     );
 
-    const result = await generateLetter("sk-test", request, "medium");
+    const result = await generateLetter("sk-test", request, "medium", { vacancy });
 
     expect(result.hidden_keys).toHaveLength(3);
-    expect(result.letter).toContain("слово1");
+    expect(result.letter).toContain("RAG");
     expect(fetch).toHaveBeenCalledWith(
       DEEPSEEK_API_URL,
       expect.objectContaining({
@@ -137,7 +151,7 @@ describe("generateLetter", () => {
       }),
     );
 
-    await expect(generateLetter("sk-test", request, "medium")).rejects.toMatchObject({
+    await expect(generateLetter("sk-test", request, "medium", { vacancy })).rejects.toMatchObject({
       code: "VALIDATION",
     });
   });
@@ -151,7 +165,7 @@ describe("generateLetter", () => {
       }),
     );
 
-    await expect(generateLetter("sk-test", request, "medium")).rejects.toMatchObject({
+    await expect(generateLetter("sk-test", request, "medium", { vacancy })).rejects.toMatchObject({
       code: "UNAUTHORIZED",
     });
   });
@@ -182,6 +196,7 @@ describe("generateLetter", () => {
     await expect(
       generateLetter("sk-test", request, "medium", {
         signal: abortController.signal,
+        vacancy,
       }),
     ).rejects.toMatchObject({
       message: GENERATION_CANCELLED_MESSAGE,

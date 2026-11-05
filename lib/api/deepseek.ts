@@ -7,13 +7,14 @@ import {
   buildProfileCompressUserPrompt,
   PROFILE_COMPRESS_SYSTEM_PROMPT,
 } from "../prompts";
-import type { GenerationRequest, GenerationResult, LetterLength } from "../types";
+import type { GenerationRequest, GenerationResult, LetterLength, Vacancy } from "../types";
 
 export const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
 export const DEEPSEEK_MODELS_URL = "https://api.deepseek.com/v1/models";
 export const DEEPSEEK_FETCH_TIMEOUT_MS = 15_000;
 export const PROFILE_COMPRESS_TIMEOUT_MS = 30_000;
 export const PROFILE_COMPRESS_MIN_CHARS = 100;
+export const DEEPSEEK_GENERATION_SEED = 42_424_242;
 
 export const GENERATION_CANCELLED_MESSAGE = "Генерация отменена.";
 
@@ -34,6 +35,8 @@ export type DeepSeekChatResponse = z.infer<typeof deepSeekChatResponseSchema>;
 export interface GenerateLetterOptions extends Partial<GenerationOutputOptions> {
   signal?: AbortSignal;
   seed?: number;
+  vacancy?: Vacancy;
+  portfolioLink?: string;
 }
 
 export function mapDeepSeekHttpStatusToError(status: number) {
@@ -131,7 +134,7 @@ export async function generateLetter(
         ],
         temperature: request.temperature,
         response_format: request.response_format,
-        seed: options?.seed ?? Math.floor(Math.random() * 1_000_000),
+        seed: options?.seed ?? DEEPSEEK_GENERATION_SEED,
       }),
       signal,
     });
@@ -163,10 +166,18 @@ export async function generateLetter(
   }
 
   const content = parsed.data.choices[0]?.message.content ?? "";
+
+  if (!options?.vacancy) {
+    throw createAppError("VALIDATION", "Для сборки письма нужны данные вакансии.");
+  }
+
   const result = parseGenerationResult(content, expectedLength, {
     includeTheses: options?.includeTheses ?? true,
     includeHiddenKeys: options?.includeHiddenKeys ?? true,
     includeTechnologies: options?.includeTechnologies ?? true,
+  }, {
+    vacancy: options.vacancy,
+    portfolioLink: options.portfolioLink ?? "",
   });
 
   if (!result.ok) {

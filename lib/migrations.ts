@@ -69,6 +69,7 @@ function normalizeSettingsFromLegacy(settings: Record<string, unknown>): {
   includeTheses: boolean;
   includeHiddenKeys: boolean;
   includeTechnologies: boolean;
+  portfolioLink: string;
 } {
   const length =
     settings.length === "short" || settings.length === "long" ? settings.length : "medium";
@@ -83,6 +84,7 @@ function normalizeSettingsFromLegacy(settings: Record<string, unknown>): {
     includeTheses: normalizeBoolean(settings.includeTheses, true),
     includeHiddenKeys: normalizeBoolean(settings.includeHiddenKeys, true),
     includeTechnologies: normalizeBoolean(settings.includeTechnologies, true),
+    portfolioLink: typeof settings.portfolioLink === "string" ? settings.portfolioLink : "",
   };
 }
 

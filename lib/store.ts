@@ -467,7 +467,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     try {
       const request = createGenerationRequest(profile, vacancy, settings, selectedExamples);
-      const result = await generateLetterFromContext(settings, request);
+      const result = await generateLetterFromContext(settings, request, vacancy);
       let nextProfile = profile;
 
       if (settings.includeTechnologies && result.technologies.length > 0) {

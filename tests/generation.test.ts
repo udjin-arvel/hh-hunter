@@ -37,6 +37,7 @@ const settings: GenerationSettings = {
   includeTheses: true,
   includeHiddenKeys: true,
   includeTechnologies: true,
+  portfolioLink: "",
 };
 
 function buildLetter(wordCount: number): string {

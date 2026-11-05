@@ -5,6 +5,7 @@ import type { FantasyLevel, LetterLength } from "@/lib/types";
 
 import { downloadVacancyMarkdown } from "@/lib/vacancy-markdown";
 
+import { Field } from "./Field";
 import { GenerationProgress } from "./GenerationProgress";
 import { ResultView } from "./ResultView";
 import { Segmented } from "./Segmented";
@@ -177,6 +178,13 @@ export function GeneratorTab() {
           Настройки
         </summary>
         <div className="mt-2.5 space-y-2.5">
+        <Field
+          label="Ссылка на портфолио"
+          placeholder="https://…"
+          value={settings.portfolioLink}
+          onChange={(portfolioLink) => updateSettings({ portfolioLink })}
+          mono
+        />
         <Segmented<LetterLength>
           label="Длина"
           value={settings.length}

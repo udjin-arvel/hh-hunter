@@ -22,6 +22,7 @@ const profile: Profile = {
   portfolioText:
     "Опыт продуктового дизайна более 5 лет. Вёл миграцию B2B-модуля на новую дизайн-систему.",
   technologiesToStudy: [],
+  hiddenTechnologiesToStudy: [],
 };
 
 const vacancy: Vacancy = {
@@ -30,6 +31,7 @@ const vacancy: Vacancy = {
   company_name: "Тинькофф",
   company_type: "крупный бизнес",
   description: "Ищем дизайнера для развития дизайн-системы.",
+  description_html: "",
   key_skills: ["Figma", "UX-research"],
   experience_required: "3–6 лет",
   employment: "Гибрид",
@@ -44,6 +46,7 @@ const settings: GenerationSettings = {
   includeTheses: true,
   includeHiddenKeys: true,
   includeTechnologies: true,
+  portfolioLink: "",
 };
 
 const example: LetterExample = {
@@ -62,8 +65,8 @@ describe("buildUserPrompt", () => {
     expect(prompt).toContain("крупный бизнес");
     expect(prompt).toContain("Продуктовый дизайнер");
     expect(prompt).toContain("Figma, UX-research");
-    expect(prompt).toContain("Деловой");
-    expect(prompt).toContain("примерно 100 слов");
+    expect(prompt).not.toContain("Деловой");
+    expect(prompt).toContain("familiar_with");
     expect(prompt).toContain("Акцент на управлении командами");
     expect(prompt).toContain("Уровень фантазии: средний");
     expect(prompt).toContain("theses");
@@ -75,7 +78,7 @@ describe("buildUserPrompt", () => {
     const highPrompt = buildUserPrompt(profile, vacancy, { ...settings, fantasy: "high" });
 
     expect(lowPrompt).toContain("низкий");
-    expect(lowPrompt).toContain("Ничего не выдумывай");
+    expect(lowPrompt).toContain("дословные");
     expect(highPrompt).toContain("высокий");
   });
 
@@ -119,7 +122,7 @@ describe("buildUserPrompt", () => {
 
     expect(prompt).toContain("<untrusted_example_1>");
     expect(prompt).toContain("Продуктовая команда");
-    expect(prompt).toContain("не копируй дословно");
+    expect(prompt).toContain("не копируй содержание");
   });
 
   it("truncates long example text", () => {
@@ -152,11 +155,12 @@ describe("buildUserPrompt", () => {
     expect(prompt).not.toContain("technologies");
     expect(prompt).not.toContain("Тезисы");
     expect(prompt).toContain("unique_intersection");
-    expect(prompt).toContain("текст отклика (letter)");
+    expect(prompt).not.toContain("текст отклика (letter)");
     expect(system).not.toContain("theses");
     expect(system).not.toContain("hidden_keys");
     expect(system).not.toContain("technologies");
-    expect(system).toContain('"letter"');
+    expect(system).toContain("edit_spec");
+    expect(system).toContain('"letter":');
   });
 
   it("includes only the enabled optional blocks", () => {
@@ -182,20 +186,18 @@ describe("buildUserPrompt", () => {
     expect(techOnly).not.toContain("hidden_keys");
   });
 
-  it("adds short-letter rules for краткое письмо", () => {
+  it("adds short edit_spec limits for краткое письмо", () => {
     const prompt = buildUserPrompt(profile, vacancy, { ...settings, length: "short" });
 
-    expect(prompt).toContain("примерно 50 слов");
-    expect(prompt).toContain("коротко и по делу");
-    expect(prompt).toContain("Здравствуйте. Я");
-    expect(prompt).toContain("Добрый день, я");
+    expect(prompt).toContain("familiar_with");
+    expect(prompt).toContain("не больше 2");
   });
 
-  it("asks to write as a front or back developer for those vacancies", () => {
+  it("asks to fill edit_spec from vacancy", () => {
     const prompt = buildUserPrompt(profile, vacancy, settings);
 
-    expect(prompt).toContain("фронтенд-разработчика");
-    expect(prompt).toContain("бэкенд-разработчика");
+    expect(prompt).toContain("edit_spec.role");
+    expect(prompt).toContain("JSON с полем letter");
   });
 });
 
@@ -214,28 +216,16 @@ describe("resolveSelectedExamples", () => {
 });
 
 describe("SYSTEM_PROMPT", () => {
-  it("requires letter, theses and business tone", () => {
-    expect(SYSTEM_PROMPT).toContain("живой человек");
-    expect(SYSTEM_PROMPT).toContain("деловой");
+  it("requires edit_spec and optional blocks", () => {
+    expect(SYSTEM_PROMPT).toContain("edit_spec");
+    expect(SYSTEM_PROMPT).toContain("familiar_with");
     expect(SYSTEM_PROMPT).toContain("theses");
     expect(SYSTEM_PROMPT).toContain("hidden_keys");
     expect(SYSTEM_PROMPT).toContain("technologies");
-    expect(SYSTEM_PROMPT).toContain("уровень фантазии");
     expect(SYSTEM_PROMPT).toContain("преимущественно на английском");
     expect(SYSTEM_PROMPT).toContain("только на русском");
-    expect(SYSTEM_PROMPT).toContain("Здравствуйте. Я");
-    expect(SYSTEM_PROMPT).toContain("мета-фраз");
-    expect(SYSTEM_PROMPT).toContain("длинное тире");
-    expect(SYSTEM_PROMPT).toContain("в чате");
-    expect(SYSTEM_PROMPT).toContain("рубленые фразы");
-    expect(SYSTEM_PROMPT).toContain("высоконагруженный");
-    expect(SYSTEM_PROMPT).toContain("выстраивал процессы");
-    expect(SYSTEM_PROMPT).toContain("Если интересно, можем продолжить общение");
-    expect(SYSTEM_PROMPT).toContain("практические навыки");
-    expect(SYSTEM_PROMPT).toContain("Не выдумывай метрики и проценты");
-    expect(SYSTEM_PROMPT).toContain("фронтенд-разработчика");
-    expect(SYSTEM_PROMPT).toContain("бэкенд-разработчика");
-    expect(SYSTEM_PROMPT).not.toContain("сопроводительное письмо");
+    expect(SYSTEM_PROMPT).toContain("Поле letter — само письмо");
+    expect(SYSTEM_PROMPT).not.toContain("github.com/udjin-arvel/resume");
   });
 });
 
@@ -252,7 +242,7 @@ describe("buildGenerationRequest", () => {
 
     expect(request.system).toBe(SYSTEM_PROMPT);
     expect(request.model).toBe("deepseek-chat");
-    expect(request.temperature).toBe(0.7);
+    expect(request.temperature).toBe(0.4);
     expect(request.response_format).toEqual({ type: "json_object" });
     expect(request.user).toContain("Александр Иванов");
     expect(request.user).toContain("Продуктовая команда");
